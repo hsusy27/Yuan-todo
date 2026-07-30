@@ -905,6 +905,9 @@
                     filterPendingApproval.value = false;
                 };
 
+                // Priority rank lookup helper
+                const priorityWeight = { '高': 1, '中': 2, '低': 3 };
+
                 const filteredTasks = computed(() => {
                     return tasks.value.filter(t => {
                         if (currentTab.value === 'daily' && t.date !== selectedDate.value) return false;
@@ -928,7 +931,19 @@
                             if (!matchTitle && !matchNotes && !matchSub && !matchAppr && !matchExp && !matchAcc && !matchHistory) return false;
                         }
                         return true;
-                    }).sort((a, b) => (a.priority === '高' ? -1 : 1));
+                    }).sort((a, b) => {
+                        // Level 1: Completed status check (0 = active, 1 = completed)
+                        const aDone = a.status === '已完成' ? 1 : 0;
+                        const bDone = b.status === '已完成' ? 1 : 0;
+                        if (aDone !== bDone) {
+                            return aDone - bDone; // Completed (1) moves after Active (0)
+                        }
+
+                        // Level 2: Priority rank (High=1, Medium=2, Low=3)
+                        const aPrio = priorityWeight[a.priority] || 2;
+                        const bPrio = priorityWeight[b.priority] || 2;
+                        return aPrio - bPrio;
+                    });
                 });
 
                 // Task Modals & Forms
