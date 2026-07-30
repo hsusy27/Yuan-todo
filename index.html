@@ -54,636 +54,717 @@
 
     <div id="app" class="flex-grow flex flex-col">
         
-        <!-- Top Navigation Header -->
-        <header class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-md border-b border-amber-100/80 dark:border-stone-700 sticky top-0 z-30 no-print shadow-xs">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <!-- Cute Cat Logo -->
-                    <div class="w-10 h-10 rounded-2xl bg-amber-100/90 dark:bg-amber-900/40 border border-amber-200/60 dark:border-amber-700/50 flex items-center justify-center text-amber-600 dark:text-amber-300 shadow-xs transition-transform hover:scale-105">
-                        <i class="fa-solid fa-cat text-xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="font-bold text-lg leading-none tracking-tight text-stone-800 dark:text-stone-100 flex items-center gap-1.5">
-                            yuan 代辦事項
-                            <span class="text-[10px] font-normal px-2 py-0.5 rounded-full bg-amber-100/80 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">🐾 Daily</span>
-                        </h1>
-                        <p class="text-xs text-stone-400 dark:text-stone-400 mt-0.5">清新工作待辦與日誌匯出</p>
-                    </div>
+        <!-- ================= Security Lock Overlay ================= -->
+        <div v-if="isLocked" class="fixed inset-0 bg-[#FAF8F5] dark:bg-stone-900 z-50 flex items-center justify-center p-4">
+            <div class="max-w-md w-full bg-white dark:bg-stone-800 rounded-3xl p-8 shadow-xl border border-amber-100 dark:border-stone-700 text-center space-y-6">
+                <!-- Cute Cat Header Icon -->
+                <div class="w-20 h-20 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300 rounded-3xl flex items-center justify-center mx-auto shadow-inner text-3xl">
+                    <i class="fa-solid fa-cat"></i>
                 </div>
 
-                <!-- Navigation Tabs & Actions -->
-                <div class="flex items-center space-x-2 sm:space-x-3">
-                    <nav class="flex space-x-1 bg-stone-100/80 dark:bg-stone-700/60 p-1 rounded-2xl">
-                        <button @click="currentTab = 'daily'" :class="currentTab === 'daily' ? 'bg-white dark:bg-stone-800 text-amber-700 dark:text-amber-300 shadow-xs font-semibold' : 'text-stone-500 dark:text-stone-300 hover:text-stone-800'" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-1.5">
-                            <i class="fa-solid fa-calendar-day"></i>
-                            <span class="hidden sm:inline">日視圖</span>
-                        </button>
-                        <button @click="currentTab = 'all'" :class="currentTab === 'all' ? 'bg-white dark:bg-stone-800 text-amber-700 dark:text-amber-300 shadow-xs font-semibold' : 'text-stone-500 dark:text-stone-300 hover:text-stone-800'" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-1.5">
-                            <i class="fa-solid fa-layer-group"></i>
-                            <span class="hidden sm:inline">全覽與搜尋</span>
-                        </button>
-                        <button @click="openExportModal()" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 hover:bg-stone-200/50 dark:hover:bg-stone-700 transition-all flex items-center space-x-1.5">
-                            <i class="fa-solid fa-file-export text-emerald-500"></i>
-                            <span class="font-medium text-emerald-600 dark:text-emerald-400">匯出日誌</span>
-                        </button>
-                    </nav>
+                <div>
+                    <h2 class="text-xl font-bold text-stone-800 dark:text-stone-100">yuan 代辦事項系統</h2>
+                    <p class="text-xs text-stone-400 dark:text-stone-400 mt-1">請輸入存取密碼以進行驗證</p>
+                </div>
 
-                    <!-- Primary Action Button -->
-                    <button @click="openTaskModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs sm:text-sm px-3.5 py-2 rounded-2xl shadow-xs hover:shadow transition flex items-center space-x-1.5 active:scale-95">
-                        <i class="fa-solid fa-plus"></i>
-                        <span class="hidden sm:inline">新增待辦</span>
+                <!-- Password Input Form -->
+                <div class="space-y-3">
+                    <div class="relative">
+                        <input :type="showPassword ? 'text' : 'password'" 
+                               v-model="inputPassword" 
+                               @keyup.enter="verifyPassword()"
+                               placeholder="請輸入存取密碼" 
+                               class="w-full text-center tracking-widest font-mono text-base px-4 py-3 rounded-2xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                        <button @click="showPassword = !showPassword" type="button" class="absolute right-4 top-3.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-sm">
+                            <i :class="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                        </button>
+                    </div>
+
+                    <div v-if="lockErrorMsg" class="text-xs text-rose-500 font-medium flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                        <span>{{ lockErrorMsg }}</span>
+                    </div>
+
+                    <button @click="verifyPassword()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-2xl text-sm transition shadow-xs hover:shadow active:scale-95">
+                        驗證解鎖 🐾
                     </button>
                 </div>
-            </div>
-        </header>
 
-        <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow no-print">
-            
-            <!-- Daily View Control Banner & Routine Quick Import -->
-            <div v-if="currentTab === 'daily'" class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-stone-800 p-4 sm:p-5 rounded-2xl border border-stone-200/70 dark:border-stone-700 shadow-xs">
+                <div class="text-[11px] text-stone-400 pt-2 border-t border-stone-100 dark:border-stone-700/60">
+                    🔒 資料儲存於本機瀏覽器，安全防護無虞
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= Main Application Interface ================= -->
+        <template v-else>
+            <!-- Top Navigation Header -->
+            <header class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-md border-b border-amber-100/80 dark:border-stone-700 sticky top-0 z-30 no-print shadow-xs">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <!-- Cute Cat Logo -->
+                        <div class="w-10 h-10 rounded-2xl bg-amber-100/90 dark:bg-amber-900/40 border border-amber-200/60 dark:border-amber-700/50 flex items-center justify-center text-amber-600 dark:text-amber-300 shadow-xs transition-transform hover:scale-105">
+                            <i class="fa-solid fa-cat text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-bold text-lg leading-none tracking-tight text-stone-800 dark:text-stone-100 flex items-center gap-1.5">
+                                yuan 代辦事項
+                                <span class="text-[10px] font-normal px-2 py-0.5 rounded-full bg-amber-100/80 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">🐾 Daily</span>
+                            </h1>
+                            <p class="text-xs text-stone-400 dark:text-stone-400 mt-0.5">清新工作待辦與日誌匯出</p>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Tabs & Actions -->
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <nav class="flex space-x-1 bg-stone-100/80 dark:bg-stone-700/60 p-1 rounded-2xl">
+                            <button @click="currentTab = 'daily'" :class="currentTab === 'daily' ? 'bg-white dark:bg-stone-800 text-amber-700 dark:text-amber-300 shadow-xs font-semibold' : 'text-stone-500 dark:text-stone-300 hover:text-stone-800'" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-1.5">
+                                <i class="fa-solid fa-calendar-day"></i>
+                                <span class="hidden sm:inline">日視圖</span>
+                            </button>
+                            <button @click="currentTab = 'all'" :class="currentTab === 'all' ? 'bg-white dark:bg-stone-800 text-amber-700 dark:text-amber-300 shadow-xs font-semibold' : 'text-stone-500 dark:text-stone-300 hover:text-stone-800'" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-1.5">
+                                <i class="fa-solid fa-layer-group"></i>
+                                <span class="hidden sm:inline">全覽與搜尋</span>
+                            </button>
+                            <button @click="openExportModal()" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 hover:bg-stone-200/50 dark:hover:bg-stone-700 transition-all flex items-center space-x-1.5">
+                                <i class="fa-solid fa-file-export text-emerald-500"></i>
+                                <span class="font-medium text-emerald-600 dark:text-emerald-400">匯出日誌</span>
+                            </button>
+                        </nav>
+
+                        <!-- Primary Action Buttons -->
+                        <button @click="openTaskModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs sm:text-sm px-3.5 py-2 rounded-2xl shadow-xs hover:shadow transition flex items-center space-x-1.5 active:scale-95">
+                            <i class="fa-solid fa-plus"></i>
+                            <span class="hidden sm:inline">新增待辦</span>
+                        </button>
+
+                        <!-- Lock Screen Button -->
+                        <button @click="lockSystem()" title="鎖定系統" class="p-2 text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-stone-700 rounded-xl transition text-sm">
+                            <i class="fa-solid fa-lock"></i>
+                        </button>
+                        
+                        <!-- Change Password Button -->
+                        <button @click="openChangePasswordModal()" title="修改密碼" class="p-2 text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-stone-700 rounded-xl transition text-sm">
+                            <i class="fa-solid fa-key"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow no-print">
                 
-                <div class="flex flex-wrap items-center gap-3">
-                    <div class="flex items-center space-x-2">
-                        <button @click="changeDate(-1)" class="w-8 h-8 flex items-center justify-center rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 transition">
-                            <i class="fa-solid fa-chevron-left text-xs text-stone-600 dark:text-stone-300"></i>
-                        </button>
-                        
-                        <div class="flex items-center space-x-2 bg-amber-50/50 dark:bg-stone-900/50 px-3 py-1.5 rounded-xl border border-amber-100/60 dark:border-stone-700">
-                            <i class="fa-regular fa-calendar text-amber-500 dark:text-amber-400 text-sm"></i>
-                            <input type="date" v-model="selectedDate" class="font-bold text-stone-800 dark:text-stone-100 text-sm sm:text-base bg-transparent border-none focus:ring-0 cursor-pointer p-0">
-                        </div>
-
-                        <button @click="changeDate(1)" class="w-8 h-8 flex items-center justify-center rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 transition">
-                            <i class="fa-solid fa-chevron-right text-xs text-stone-600 dark:text-stone-300"></i>
-                        </button>
-
-                        <button @click="setToday()" class="text-xs bg-amber-100/70 dark:bg-stone-700 text-amber-800 dark:text-amber-300 px-2.5 py-1.5 rounded-xl hover:bg-amber-200/70 transition font-medium border border-amber-200/50">
-                            今天
-                        </button>
-                    </div>
-
-                    <!-- Quick Routine Tasks Import Button -->
-                    <div class="relative group">
-                        <button class="bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-bolt text-emerald-500"></i>
-                            <span>帶入例行公事</span>
-                            <i class="fa-solid fa-chevron-down text-[10px] text-emerald-500"></i>
-                        </button>
-                        
-                        <!-- Dropdown Menu -->
-                        <div class="absolute left-0 mt-1 w-56 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl shadow-xl z-20 hidden group-hover:block p-1.5 space-y-1">
-                            <button @click="importRoutineTasks('daily')" class="w-full text-left px-3 py-2 rounded-xl text-xs text-stone-700 dark:text-stone-200 hover:bg-amber-50 dark:hover:bg-stone-700 flex items-center space-x-2 transition">
-                                <i class="fa-solid fa-sun text-amber-500"></i>
-                                <div>
-                                    <div class="font-semibold">帶入每日例行 (2項)</div>
-                                    <div class="text-[10px] text-stone-400">設施檢核、紙本日常火源</div>
-                                </div>
-                            </button>
-                            <button @click="importRoutineTasks('monthly')" class="w-full text-left px-3 py-2 rounded-xl text-xs text-stone-700 dark:text-stone-200 hover:bg-amber-50 dark:hover:bg-stone-700 flex items-center space-x-2 transition">
-                                <i class="fa-solid fa-calendar-check text-indigo-500"></i>
-                                <div>
-                                    <div class="font-semibold">帶入每月例行 (4項)</div>
-                                    <div class="text-[10px] text-stone-400">自主檢查、滅火器、火源、個資</div>
-                                </div>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Daily Completion Progress Bar -->
-                <div class="flex items-center space-x-3 bg-amber-50/40 dark:bg-stone-900/50 px-4 py-2 rounded-2xl border border-amber-100/60 dark:border-stone-700/50">
-                    <div class="text-xs text-stone-500">
-                        當日進度: <span class="font-bold text-stone-800 dark:text-stone-200">{{ dailyStats.total > 0 ? dailyStats.completed : 0 }}/{{ dailyStats.total }} 項 ({{ dailyStats.total > 0 ? dailyStats.percent : 0 }}%)</span>
-                    </div>
-                    <div class="w-28 sm:w-36 bg-amber-100/60 dark:bg-stone-700 rounded-full h-2.5 overflow-hidden">
-                        <div class="bg-gradient-to-r from-amber-400 to-emerald-400 h-2.5 rounded-full transition-all duration-300" :style="{ width: (dailyStats.total > 0 ? dailyStats.percent : 0) + '%' }"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Category Filter Bar -->
-            <div class="mb-6 space-y-3">
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="text-xs font-semibold text-stone-400 uppercase tracking-wider mr-1">主業務:</span>
-                    <button v-for="cat in mainCategories" :key="cat" @click="selectMainCategory(cat)" 
-                        :class="filterCategory === cat && !filterPendingApproval ? 'bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 font-semibold shadow-xs' : 'bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700 hover:bg-stone-100'" 
-                        class="px-3.5 py-1.5 rounded-xl text-xs transition">
-                        {{ cat === 'ALL' ? '全部' : cat }}
-                    </button>
-
-                    <!-- Quick Filter Button for Pending Supervisor Confirmations -->
-                    <button @click="togglePendingApprovalFilter()" 
-                        :class="filterPendingApproval ? 'bg-purple-600 text-white font-bold shadow-xs' : 'bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100'" 
-                        class="px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-1.5 ml-auto sm:ml-2">
-                        <i class="fa-solid fa-user-check"></i>
-                        <span>待長官確認</span>
-                        <span v-if="pendingApprovalCount > 0" class="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-200 dark:bg-purple-800 text-purple-900 dark:text-purple-100 font-extrabold">
-                            {{ pendingApprovalCount }}
-                        </span>
-                    </button>
-                </div>
-
-                <!-- Sub-category filter pills when a main category is selected -->
-                <div v-if="filterCategory !== 'ALL' && subCategoryOptions[filterCategory]" class="flex flex-wrap items-center gap-1.5 pl-3 border-l-2 border-amber-400 bg-amber-50/40 dark:bg-stone-800/50 p-2 rounded-r-2xl">
-                    <span class="text-xs font-medium text-stone-500 dark:text-stone-400 mr-1"><i class="fa-solid fa-filter text-[10px] mr-1"></i>細項:</span>
-                    <button @click="filterSubCategory = 'ALL'" 
-                        :class="filterSubCategory === 'ALL' ? 'bg-amber-500 text-white font-medium' : 'bg-white dark:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-600 hover:bg-stone-100'" 
-                        class="px-2.5 py-1 rounded-lg text-[11px] transition">
-                        全部細項
-                    </button>
-                    <button v-for="sub in subCategoryOptions[filterCategory]" :key="sub" @click="filterSubCategory = sub" 
-                        :class="filterSubCategory === sub ? 'bg-amber-500 text-white font-medium' : 'bg-white dark:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-600 hover:bg-stone-100'" 
-                        class="px-2.5 py-1 rounded-lg text-[11px] transition">
-                        {{ sub }}
-                    </button>
-                </div>
-
-                <div class="relative w-full sm:w-64 pt-1">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-4 text-xs text-stone-400"></i>
-                    <input type="text" v-model="searchQuery" placeholder="搜尋事項、核銷單、備註..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                </div>
-            </div>
-
-            <!-- Empty State -->
-            <div v-if="filteredTasks.length === 0" class="text-center py-16 bg-white dark:bg-stone-800 rounded-2xl border border-dashed border-stone-300 dark:border-stone-700 my-4">
-                <div class="w-16 h-16 bg-amber-50 dark:bg-stone-700 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fa-regular fa-clipboard text-2xl"></i>
-                </div>
-                <h3 class="text-base font-semibold text-stone-700 dark:text-stone-200">尚無相關待辦事項</h3>
-                <p class="text-xs text-stone-400 mt-1">點擊上方「新增待辦」或「帶入例行公事」開始安排工作吧！</p>
-                <div class="flex items-center justify-center gap-2 mt-4">
-                    <button @click="importRoutineTasks('daily')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium transition shadow-2xs">
-                        <i class="fa-solid fa-bolt mr-1"></i>帶入每日例行
-                    </button>
-                    <button @click="openTaskModal()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-medium transition shadow-2xs">
-                        + 建立客製事項
-                    </button>
-                </div>
-            </div>
-
-            <!-- Task List -->
-            <div v-else class="space-y-3">
-                <div v-for="task in filteredTasks" :key="task.id" 
-                    :class="[
-                        'bg-white dark:bg-stone-800 rounded-2xl p-4 sm:p-5 border transition-all duration-200 shadow-xs hover:shadow-md flex flex-col md:flex-row md:items-start justify-between gap-4',
-                        task.status === '已完成' ? 'border-stone-200 dark:border-stone-700/60 bg-stone-50/50 dark:bg-stone-800/40 opacity-75' : 'border-stone-200/80 dark:border-stone-700'
-                    ]">
+                <!-- Daily View Control Banner & Routine Quick Import -->
+                <div v-if="currentTab === 'daily'" class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-stone-800 p-4 sm:p-5 rounded-2xl border border-stone-200/70 dark:border-stone-700 shadow-xs">
                     
-                    <!-- Left Section: Status Checkbox & Details -->
-                    <div class="flex items-start space-x-3.5 flex-grow">
-                        <!-- Quick Complete Toggle -->
-                        <button @click="toggleComplete(task)" class="mt-0.5 text-xl flex-shrink-0 transition transform active:scale-95">
-                            <i v-if="task.status === '已完成'" class="fa-solid fa-circle-check text-emerald-500"></i>
-                            <i v-else-if="task.status === '進行中'" class="fa-solid fa-spinner text-amber-500 animate-spin"></i>
-                            <i v-else-if="task.status === '暫緩'" class="fa-solid fa-circle-pause text-stone-400"></i>
-                            <i v-else class="fa-regular fa-circle text-stone-300 hover:text-amber-500 dark:text-stone-600"></i>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex items-center space-x-2">
+                            <button @click="changeDate(-1)" class="w-8 h-8 flex items-center justify-center rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 transition">
+                                <i class="fa-solid fa-chevron-left text-xs text-stone-600 dark:text-stone-300"></i>
+                            </button>
+                            
+                            <div class="flex items-center space-x-2 bg-amber-50/50 dark:bg-stone-900/50 px-3 py-1.5 rounded-xl border border-amber-100/60 dark:border-stone-700">
+                                <i class="fa-regular fa-calendar text-amber-500 dark:text-amber-400 text-sm"></i>
+                                <input type="date" v-model="selectedDate" class="font-bold text-stone-800 dark:text-stone-100 text-sm sm:text-base bg-transparent border-none focus:ring-0 cursor-pointer p-0">
+                            </div>
+
+                            <button @click="changeDate(1)" class="w-8 h-8 flex items-center justify-center rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 transition">
+                                <i class="fa-solid fa-chevron-right text-xs text-stone-600 dark:text-stone-300"></i>
+                            </button>
+
+                            <button @click="setToday()" class="text-xs bg-amber-100/70 dark:bg-stone-700 text-amber-800 dark:text-amber-300 px-2.5 py-1.5 rounded-xl hover:bg-amber-200/70 transition font-medium border border-amber-200/50">
+                                今天
+                            </button>
+                        </div>
+
+                        <!-- Quick Routine Tasks Import Button -->
+                        <div class="relative group">
+                            <button class="bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-bolt text-emerald-500"></i>
+                                <span>帶入例行公事</span>
+                                <i class="fa-solid fa-chevron-down text-[10px] text-emerald-500"></i>
+                            </button>
+                            
+                            <!-- Dropdown Menu -->
+                            <div class="absolute left-0 mt-1 w-56 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl shadow-xl z-20 hidden group-hover:block p-1.5 space-y-1">
+                                <button @click="importRoutineTasks('daily')" class="w-full text-left px-3 py-2 rounded-xl text-xs text-stone-700 dark:text-stone-200 hover:bg-amber-50 dark:hover:bg-stone-700 flex items-center space-x-2 transition">
+                                    <i class="fa-solid fa-sun text-amber-500"></i>
+                                    <div>
+                                        <div class="font-semibold">帶入每日例行 (2項)</div>
+                                        <div class="text-[10px] text-stone-400">設施檢核、紙本日常火源</div>
+                                    </div>
+                                </button>
+                                <button @click="importRoutineTasks('monthly')" class="w-full text-left px-3 py-2 rounded-xl text-xs text-stone-700 dark:text-stone-200 hover:bg-amber-50 dark:hover:bg-stone-700 flex items-center space-x-2 transition">
+                                    <i class="fa-solid fa-calendar-check text-indigo-500"></i>
+                                    <div>
+                                        <div class="font-semibold">帶入每月例行 (4項)</div>
+                                        <div class="text-[10px] text-stone-400">自主檢查、滅火器、火源、個資</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Completion Progress Bar -->
+                    <div class="flex items-center space-x-3 bg-amber-50/40 dark:bg-stone-900/50 px-4 py-2 rounded-2xl border border-amber-100/60 dark:border-stone-700/50">
+                        <div class="text-xs text-stone-500">
+                            當日進度: <span class="font-bold text-stone-800 dark:text-stone-200">{{ dailyStats.total > 0 ? dailyStats.completed : 0 }}/{{ dailyStats.total }} 項 ({{ dailyStats.total > 0 ? dailyStats.percent : 0 }}%)</span>
+                        </div>
+                        <div class="w-28 sm:w-36 bg-amber-100/60 dark:bg-stone-700 rounded-full h-2.5 overflow-hidden">
+                            <div class="bg-gradient-to-r from-amber-400 to-emerald-400 h-2.5 rounded-full transition-all duration-300" :style="{ width: (dailyStats.total > 0 ? dailyStats.percent : 0) + '%' }"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Filter Bar -->
+                <div class="mb-6 space-y-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-semibold text-stone-400 uppercase tracking-wider mr-1">主業務:</span>
+                        <button v-for="cat in mainCategories" :key="cat" @click="selectMainCategory(cat)" 
+                            :class="filterCategory === cat && !filterPendingApproval ? 'bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 font-semibold shadow-xs' : 'bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700 hover:bg-stone-100'" 
+                            class="px-3.5 py-1.5 rounded-xl text-xs transition">
+                            {{ cat === 'ALL' ? '全部' : cat }}
                         </button>
 
-                        <div class="flex-grow min-w-0">
-                            <!-- Title and Tags -->
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span :class="[
-                                    'font-semibold text-sm sm:text-base break-words',
-                                    task.status === '已完成' ? 'line-through text-stone-400 dark:text-stone-500' : 'text-stone-800 dark:text-stone-100'
-                                ]">
-                                    {{ task.title }}
-                                </span>
+                        <!-- Quick Filter Button for Pending Supervisor Confirmations -->
+                        <button @click="togglePendingApprovalFilter()" 
+                            :class="filterPendingApproval ? 'bg-purple-600 text-white font-bold shadow-xs' : 'bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100'" 
+                            class="px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-1.5 ml-auto sm:ml-2">
+                            <i class="fa-solid fa-user-check"></i>
+                            <span>待長官確認</span>
+                            <span v-if="pendingApprovalCount > 0" class="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-200 dark:bg-purple-800 text-purple-900 dark:text-purple-100 font-extrabold">
+                                {{ pendingApprovalCount }}
+                            </span>
+                        </button>
+                    </div>
 
-                                <!-- Approval Requirement Badge with Quick Action -->
-                                <div v-if="task.approvalStatus && task.approvalStatus !== '無'" class="flex items-center gap-1">
+                    <!-- Sub-category filter pills when a main category is selected -->
+                    <div v-if="filterCategory !== 'ALL' && subCategoryOptions[filterCategory]" class="flex flex-wrap items-center gap-1.5 pl-3 border-l-2 border-amber-400 bg-amber-50/40 dark:bg-stone-800/50 p-2 rounded-r-2xl">
+                        <span class="text-xs font-medium text-stone-500 dark:text-stone-400 mr-1"><i class="fa-solid fa-filter text-[10px] mr-1"></i>細項:</span>
+                        <button @click="filterSubCategory = 'ALL'" 
+                            :class="filterSubCategory === 'ALL' ? 'bg-amber-500 text-white font-medium' : 'bg-white dark:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-600 hover:bg-stone-100'" 
+                            class="px-2.5 py-1 rounded-lg text-[11px] transition">
+                            全部細項
+                        </button>
+                        <button v-for="sub in subCategoryOptions[filterCategory]" :key="sub" @click="filterSubCategory = sub" 
+                            :class="filterSubCategory === sub ? 'bg-amber-500 text-white font-medium' : 'bg-white dark:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-600 hover:bg-stone-100'" 
+                            class="px-2.5 py-1 rounded-lg text-[11px] transition">
+                            {{ sub }}
+                        </button>
+                    </div>
+
+                    <div class="relative w-full sm:w-64 pt-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-4 text-xs text-stone-400"></i>
+                        <input type="text" v-model="searchQuery" placeholder="搜尋事項、核銷單、備註..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div v-if="filteredTasks.length === 0" class="text-center py-16 bg-white dark:bg-stone-800 rounded-2xl border border-dashed border-stone-300 dark:border-stone-700 my-4">
+                    <div class="w-16 h-16 bg-amber-50 dark:bg-stone-700 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fa-regular fa-clipboard text-2xl"></i>
+                    </div>
+                    <h3 class="text-base font-semibold text-stone-700 dark:text-stone-200">尚無相關待辦事項</h3>
+                    <p class="text-xs text-stone-400 mt-1">點擊上方「新增待辦」或「帶入例行公事」開始安排工作吧！</p>
+                    <div class="flex items-center justify-center gap-2 mt-4">
+                        <button @click="importRoutineTasks('daily')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium transition shadow-2xs">
+                            <i class="fa-solid fa-bolt mr-1"></i>帶入每日例行
+                        </button>
+                        <button @click="openTaskModal()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-medium transition shadow-2xs">
+                            + 建立客製事項
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Task List -->
+                <div v-else class="space-y-3">
+                    <div v-for="task in filteredTasks" :key="task.id" 
+                        :class="[
+                            'bg-white dark:bg-stone-800 rounded-2xl p-4 sm:p-5 border transition-all duration-200 shadow-xs hover:shadow-md flex flex-col md:flex-row md:items-start justify-between gap-4',
+                            task.status === '已完成' ? 'border-stone-200 dark:border-stone-700/60 bg-stone-50/50 dark:bg-stone-800/40 opacity-75' : 'border-stone-200/80 dark:border-stone-700'
+                        ]">
+                        
+                        <!-- Left Section: Status Checkbox & Details -->
+                        <div class="flex items-start space-x-3.5 flex-grow">
+                            <!-- Quick Complete Toggle -->
+                            <button @click="toggleComplete(task)" class="mt-0.5 text-xl flex-shrink-0 transition transform active:scale-95">
+                                <i v-if="task.status === '已完成'" class="fa-solid fa-circle-check text-emerald-500"></i>
+                                <i v-else-if="task.status === '進行中'" class="fa-solid fa-spinner text-amber-500 animate-spin"></i>
+                                <i v-else-if="task.status === '暫緩'" class="fa-solid fa-circle-pause text-stone-400"></i>
+                                <i v-else class="fa-regular fa-circle text-stone-300 hover:text-amber-500 dark:text-stone-600"></i>
+                            </button>
+
+                            <div class="flex-grow min-w-0">
+                                <!-- Title and Tags -->
+                                <div class="flex flex-wrap items-center gap-2">
                                     <span :class="[
-                                        task.approvalStatus === '已完成確認' 
-                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-200' 
-                                            : 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border-purple-200',
-                                        'border text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1'
+                                        'font-semibold text-sm sm:text-base break-words',
+                                        task.status === '已完成' ? 'line-through text-stone-400 dark:text-stone-500' : 'text-stone-800 dark:text-stone-100'
                                     ]">
-                                        <i :class="task.approvalStatus === '已完成確認' ? 'fa-solid fa-circle-check' : 'fa-solid fa-user-clock'" class="text-[9px]"></i>
-                                        {{ task.approvalStatus }}
+                                        {{ task.title }}
                                     </span>
-                                    
-                                    <!-- Quick Confirm Toggle Button on Card -->
-                                    <button v-if="task.approvalStatus === '需與組長確認' || task.approvalStatus === '需與主任確認'" 
-                                        @click="quickConfirmApproval(task)" 
-                                        title="點擊改為已完成確認"
-                                        class="text-[10px] bg-purple-600 hover:bg-purple-700 text-white px-2 py-0.5 rounded-full font-medium transition flex items-center gap-0.5 shadow-2xs">
-                                        <i class="fa-solid fa-check text-[8px]"></i>
-                                        <span>完成確認</span>
-                                    </button>
-                                </div>
 
-                                <!-- Priority Tag -->
-                                <span :class="getPriorityClass(task.priority)" class="text-[10px] px-2 py-0.5 rounded-full font-bold">
-                                    {{ task.priority }}優先
-                                </span>
-
-                                <!-- Main Category Tag -->
-                                <span class="bg-amber-100/70 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-[10px] px-2.5 py-0.5 rounded-full font-semibold">
-                                    {{ task.category }}
-                                </span>
-
-                                <!-- Sub Category Tag -->
-                                <span v-if="task.subCategory" class="bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-[10px] px-2.5 py-0.5 rounded-full font-medium border border-orange-200/50 dark:border-orange-800/50">
-                                    {{ task.subCategory }}
-                                </span>
-
-                                <!-- Date tag (if in ALL view) -->
-                                <span v-if="currentTab === 'all'" class="text-[11px] text-stone-400 bg-stone-100 dark:bg-stone-700/50 px-2 py-0.5 rounded-md">
-                                    <i class="fa-regular fa-calendar text-[10px] mr-1"></i>{{ task.date }}
-                                </span>
-                            </div>
-
-                            <!-- EXPENSE WORKFLOW SPECIAL DISPLAY BOX -->
-                            <div v-if="task.subCategory === '費用'" class="mt-2.5 bg-blue-50/70 dark:bg-blue-950/30 p-3 rounded-2xl border border-blue-100 dark:border-blue-900/50 space-y-2">
-                                <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
-                                    <div class="flex items-center space-x-2 text-blue-900 dark:text-blue-200 font-semibold">
-                                        <i class="fa-solid fa-file-invoice-dollar text-blue-600 dark:text-blue-400"></i>
-                                        <span>費用核銷追蹤：</span>
-                                        <span v-if="task.accountingDate" class="bg-white dark:bg-stone-800 px-2 py-0.5 rounded-lg text-[11px] border border-blue-200 text-blue-800 dark:text-blue-300">
-                                            <i class="fa-solid fa-paper-plane mr-1 text-[10px]"></i>送會計室: {{ task.accountingDate }}
-                                        </span>
-                                        <span v-else class="text-[11px] text-stone-400 font-normal italic">未標記送會計日期</span>
-                                    </div>
-
-                                    <!-- Quick Expense Status Dropdown -->
-                                    <div class="flex items-center space-x-1.5">
-                                        <span class="text-[11px] text-blue-700 dark:text-blue-300 font-medium">當前核銷進度:</span>
-                                        <select v-model="task.expenseStatus" @change="saveTasks()" class="text-xs bg-white dark:bg-stone-800 text-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-800 rounded-xl px-2 py-1 font-bold focus:ring-1 focus:ring-blue-400 shadow-2xs">
-                                            <option value="已開立">已開立</option>
-                                            <option value="會計確認">會計確認</option>
-                                            <option value="費用轉彙總">費用轉彙總</option>
-                                            <option value="出納">出納</option>
-                                            <option value="完成">完成</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <!-- Expense Visual Step Tracker -->
-                                <div class="grid grid-cols-5 gap-1 pt-1 text-center text-[10px]">
-                                    <div v-for="step in expenseSteps" :key="step" 
-                                        :class="[
-                                            'py-1 px-1 rounded-lg font-medium transition-all flex flex-col items-center justify-center gap-0.5',
-                                            isExpenseStepActive(task.expenseStatus, step) ? 'bg-blue-600 text-white shadow-2xs font-bold' : 'bg-white/80 dark:bg-stone-800/80 text-stone-400 border border-blue-100/50'
+                                    <!-- Approval Requirement Badge with Quick Action -->
+                                    <div v-if="task.approvalStatus && task.approvalStatus !== '無'" class="flex items-center gap-1">
+                                        <span :class="[
+                                            task.approvalStatus === '已完成確認' 
+                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-200' 
+                                                : 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border-purple-200',
+                                            'border text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1'
                                         ]">
-                                        <span>{{ step }}</span>
-                                        <i v-if="isExpenseStepActive(task.expenseStatus, step)" class="fa-solid fa-circle-check text-[8px]"></i>
+                                            <i :class="task.approvalStatus === '已完成確認' ? 'fa-solid fa-circle-check' : 'fa-solid fa-user-clock'" class="text-[9px]"></i>
+                                            {{ task.approvalStatus }}
+                                        </span>
+                                        
+                                        <!-- Quick Confirm Toggle Button on Card -->
+                                        <button v-if="task.approvalStatus === '需與組長確認' || task.approvalStatus === '需與主任確認'" 
+                                            @click="quickConfirmApproval(task)" 
+                                            title="點擊改為已完成確認"
+                                            class="text-[10px] bg-purple-600 hover:bg-purple-700 text-white px-2 py-0.5 rounded-full font-medium transition flex items-center gap-0.5 shadow-2xs">
+                                            <i class="fa-solid fa-check text-[8px]"></i>
+                                            <span>完成確認</span>
+                                        </button>
                                     </div>
+
+                                    <!-- Priority Tag -->
+                                    <span :class="getPriorityClass(task.priority)" class="text-[10px] px-2 py-0.5 rounded-full font-bold">
+                                        {{ task.priority }}優先
+                                    </span>
+
+                                    <!-- Main Category Tag -->
+                                    <span class="bg-amber-100/70 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-[10px] px-2.5 py-0.5 rounded-full font-semibold">
+                                        {{ task.category }}
+                                    </span>
+
+                                    <!-- Sub Category Tag -->
+                                    <span v-if="task.subCategory" class="bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-[10px] px-2.5 py-0.5 rounded-full font-medium border border-orange-200/50 dark:border-orange-800/50">
+                                        {{ task.subCategory }}
+                                    </span>
+
+                                    <!-- Date tag (if in ALL view) -->
+                                    <span v-if="currentTab === 'all'" class="text-[11px] text-stone-400 bg-stone-100 dark:bg-stone-700/50 px-2 py-0.5 rounded-md">
+                                        <i class="fa-regular fa-calendar text-[10px] mr-1"></i>{{ task.date }}
+                                    </span>
                                 </div>
-                            </div>
 
-                            <!-- Notes / Remarks (With Clickable URL Support) -->
-                            <div v-if="task.notes" class="text-xs text-stone-600 dark:text-stone-400 mt-2.5 whitespace-pre-line bg-stone-50 dark:bg-stone-900/40 p-2.5 rounded-xl border border-stone-100 dark:border-stone-800/80">
-                                <i class="fa-regular fa-note-sticky text-amber-500 mr-1.5"></i><span v-html="renderNotesWithLinks(task.notes)"></span>
-                            </div>
+                                <!-- EXPENSE WORKFLOW SPECIAL DISPLAY BOX -->
+                                <div v-if="task.subCategory === '費用'" class="mt-2.5 bg-blue-50/70 dark:bg-blue-950/30 p-3 rounded-2xl border border-blue-100 dark:border-blue-900/50 space-y-2">
+                                    <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                                        <div class="flex items-center space-x-2 text-blue-900 dark:text-blue-200 font-semibold">
+                                            <i class="fa-solid fa-file-invoice-dollar text-blue-600 dark:text-blue-400"></i>
+                                            <span>費用核銷追蹤：</span>
+                                            <span v-if="task.accountingDate" class="bg-white dark:bg-stone-800 px-2 py-0.5 rounded-lg text-[11px] border border-blue-200 text-blue-800 dark:text-blue-300">
+                                                <i class="fa-solid fa-paper-plane mr-1 text-[10px]"></i>送會計室: {{ task.accountingDate }}
+                                            </span>
+                                            <span v-else class="text-[11px] text-stone-400 font-normal italic">未標記送會計日期</span>
+                                        </div>
 
-                            <!-- Execution History Timeline Section -->
-                            <div class="mt-3 pt-2.5 border-t border-stone-100 dark:border-stone-700/60">
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <button @click="toggleTaskHistory(task.id)" class="text-[11px] font-semibold text-stone-500 dark:text-stone-400 hover:text-amber-600 flex items-center space-x-1.5 transition">
-                                        <i class="fa-solid fa-clock-rotate-left text-amber-500"></i>
-                                        <span>執行歷程 ({{ (task.history || []).length }} 筆)</span>
-                                        <i :class="expandedHistory[task.id] ? 'fa-chevron-up' : 'fa-chevron-down'" class="fa-solid text-[9px] text-stone-400"></i>
-                                    </button>
-                                </div>
-
-                                <!-- Timeline View & Quick Add Box -->
-                                <div v-if="expandedHistory[task.id]" class="space-y-2.5 mt-2 bg-amber-50/40 dark:bg-stone-900/40 p-3 rounded-2xl border border-amber-100/60 dark:border-stone-800">
-                                    <div v-if="!task.history || task.history.length === 0" class="text-[11px] text-stone-400 italic py-1">
-                                        尚無執行歷程紀錄，可於下方快速追加處理進度。
-                                    </div>
-                                    <div v-else class="relative pl-3 border-l-2 border-amber-300 dark:border-amber-700 space-y-2 my-1">
-                                        <div v-for="log in task.history" :key="log.id" class="relative group text-xs">
-                                            <div class="absolute -left-[17px] top-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-stone-800"></div>
-                                            <div class="flex items-center justify-between text-[10px] text-stone-400 mb-0.5">
-                                                <span class="font-mono text-amber-700 dark:text-amber-300 font-semibold"><i class="fa-regular fa-clock mr-1"></i>{{ log.timestamp }}</span>
-                                                <button @click="deleteHistoryLog(task, log.id)" title="刪除歷程" class="opacity-0 group-hover:opacity-100 text-stone-400 hover:text-rose-500 transition text-[10px] px-1">
-                                                    <i class="fa-solid fa-xmark"></i>
-                                                </button>
-                                            </div>
-                                            <div class="text-stone-700 dark:text-stone-200 whitespace-pre-line leading-relaxed bg-white dark:bg-stone-800 p-2 rounded-xl border border-amber-100/80 dark:border-stone-700/80 text-xs shadow-2xs">
-                                                {{ log.content }}
-                                            </div>
+                                        <!-- Quick Expense Status Dropdown -->
+                                        <div class="flex items-center space-x-1.5">
+                                            <span class="text-[11px] text-blue-700 dark:text-blue-300 font-medium">當前核銷進度:</span>
+                                            <select v-model="task.expenseStatus" @change="saveTasks()" class="text-xs bg-white dark:bg-stone-800 text-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-800 rounded-xl px-2 py-1 font-bold focus:ring-1 focus:ring-blue-400 shadow-2xs">
+                                                <option value="已開立">已開立</option>
+                                                <option value="會計確認">會計確認</option>
+                                                <option value="費用轉彙總">費用轉彙總</option>
+                                                <option value="出納">出納</option>
+                                                <option value="完成">完成</option>
+                                            </select>
                                         </div>
                                     </div>
 
-                                    <!-- Quick Add Log Input -->
-                                    <div class="flex items-center gap-2 pt-1">
-                                        <input type="text" 
-                                            v-model="quickLogs[task.id]" 
-                                            @keyup.enter="addQuickLog(task)" 
-                                            placeholder="新增最新執行歷程 (Enter 提交)..." 
-                                            class="flex-grow text-xs px-3 py-1.5 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                                        <button @click="addQuickLog(task)" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-medium transition flex items-center gap-1 shrink-0 shadow-2xs">
-                                            <i class="fa-solid fa-plus text-[10px]"></i>
-                                            <span>記錄</span>
+                                    <!-- Expense Visual Step Tracker -->
+                                    <div class="grid grid-cols-5 gap-1 pt-1 text-center text-[10px]">
+                                        <div v-for="step in expenseSteps" :key="step" 
+                                            :class="[
+                                                'py-1 px-1 rounded-lg font-medium transition-all flex flex-col items-center justify-center gap-0.5',
+                                                isExpenseStepActive(task.expenseStatus, step) ? 'bg-blue-600 text-white shadow-2xs font-bold' : 'bg-white/80 dark:bg-stone-800/80 text-stone-400 border border-blue-100/50'
+                                            ]">
+                                            <span>{{ step }}</span>
+                                            <i v-if="isExpenseStepActive(task.expenseStatus, step)" class="fa-solid fa-circle-check text-[8px]"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Notes / Remarks (With Clickable URL Support) -->
+                                <div v-if="task.notes" class="text-xs text-stone-600 dark:text-stone-400 mt-2.5 whitespace-pre-line bg-stone-50 dark:bg-stone-900/40 p-2.5 rounded-xl border border-stone-100 dark:border-stone-800/80">
+                                    <i class="fa-regular fa-note-sticky text-amber-500 mr-1.5"></i><span v-html="renderNotesWithLinks(task.notes)"></span>
+                                </div>
+
+                                <!-- Execution History Timeline Section -->
+                                <div class="mt-3 pt-2.5 border-t border-stone-100 dark:border-stone-700/60">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <button @click="toggleTaskHistory(task.id)" class="text-[11px] font-semibold text-stone-500 dark:text-stone-400 hover:text-amber-600 flex items-center space-x-1.5 transition">
+                                            <i class="fa-solid fa-clock-rotate-left text-amber-500"></i>
+                                            <span>執行歷程 ({{ (task.history || []).length }} 筆)</span>
+                                            <i :class="expandedHistory[task.id] ? 'fa-chevron-up' : 'fa-chevron-down'" class="fa-solid text-[9px] text-stone-400"></i>
                                         </button>
+                                    </div>
+
+                                    <!-- Timeline View & Quick Add Box -->
+                                    <div v-if="expandedHistory[task.id]" class="space-y-2.5 mt-2 bg-amber-50/40 dark:bg-stone-900/40 p-3 rounded-2xl border border-amber-100/60 dark:border-stone-800">
+                                        <div v-if="!task.history || task.history.length === 0" class="text-[11px] text-stone-400 italic py-1">
+                                            尚無執行歷程紀錄，可於下方快速追加處理進度。
+                                        </div>
+                                        <div v-else class="relative pl-3 border-l-2 border-amber-300 dark:border-amber-700 space-y-2 my-1">
+                                            <div v-for="log in task.history" :key="log.id" class="relative group text-xs">
+                                                <div class="absolute -left-[17px] top-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-stone-800"></div>
+                                                <div class="flex items-center justify-between text-[10px] text-stone-400 mb-0.5">
+                                                    <span class="font-mono text-amber-700 dark:text-amber-300 font-semibold"><i class="fa-regular fa-clock mr-1"></i>{{ log.timestamp }}</span>
+                                                    <button @click="deleteHistoryLog(task, log.id)" title="刪除歷程" class="opacity-0 group-hover:opacity-100 text-stone-400 hover:text-rose-500 transition text-[10px] px-1">
+                                                        <i class="fa-solid fa-xmark"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="text-stone-700 dark:text-stone-200 whitespace-pre-line leading-relaxed bg-white dark:bg-stone-800 p-2 rounded-xl border border-amber-100/80 dark:border-stone-700/80 text-xs shadow-2xs">
+                                                    {{ log.content }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Quick Add Log Input -->
+                                        <div class="flex items-center gap-2 pt-1">
+                                            <input type="text" 
+                                                v-model="quickLogs[task.id]" 
+                                                @keyup.enter="addQuickLog(task)" 
+                                                placeholder="新增最新執行歷程 (Enter 提交)..." 
+                                                class="flex-grow text-xs px-3 py-1.5 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                            <button @click="addQuickLog(task)" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-medium transition flex items-center gap-1 shrink-0 shadow-2xs">
+                                                <i class="fa-solid fa-plus text-[10px]"></i>
+                                                <span>記錄</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Right Section: Progress & Actions -->
-                    <div class="flex items-center justify-between md:justify-end space-x-3 pt-2 md:pt-0 border-t md:border-t-0 border-stone-100 dark:border-stone-700/50 flex-shrink-0">
-                        
-                        <!-- Status Selector Dropdown -->
-                        <select v-model="task.status" @change="saveTasks()" class="text-xs bg-stone-100 dark:bg-stone-700 text-stone-700 dark:text-stone-200 border-none rounded-xl px-2.5 py-1.5 focus:ring-1 focus:ring-amber-400 font-medium">
-                            <option value="未開始">未開始</option>
-                            <option value="進行中">進行中</option>
-                            <option value="已完成">已完成</option>
-                            <option value="暫緩">暫緩</option>
-                        </select>
-
-                        <!-- Actions -->
-                        <div class="flex items-center space-x-1">
-                            <button v-if="task.status !== '已完成'" @click="moveToTomorrow(task)" title="移至明天" class="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-stone-700 rounded-lg transition text-xs">
-                                <i class="fa-solid fa-forward-step"></i>
-                            </button>
-                            <button @click="editTask(task)" title="編輯" class="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-stone-700 rounded-lg transition text-xs">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <button @click="deleteTask(task.id)" title="刪除" class="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-stone-700 rounded-lg transition text-xs">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- Task Edit / Create Modal -->
-        <div v-if="showTaskModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 no-print">
-            <div class="bg-white dark:bg-stone-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-700 space-y-4 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-700 sticky top-0 bg-white dark:bg-stone-800 z-10">
-                    <h3 class="font-bold text-base text-stone-800 dark:text-stone-100">
-                        {{ editingTaskId ? '編輯待辦事項' : '新增待辦事項' }}
-                    </h3>
-                    <button @click="showTaskModal = false" class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200">
-                        <i class="fa-solid fa-xmark text-lg"></i>
-                    </button>
-                </div>
-
-                <div class="space-y-3.5 text-xs">
-                    <div>
-                        <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">事項標題 *</label>
-                        <input type="text" v-model="formTask.title" placeholder="例如: 8月份計程車資核銷、公文線上簽核..." class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">執行日期</label>
-                            <input type="date" v-model="formTask.date" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">主業務類別</label>
-                            <select v-model="formTask.category" @change="onCategoryChange()" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium">
-                                <option value="行政業務">行政業務</option>
-                                <option value="人事業務">人事業務</option>
-                                <option value="QMS">QMS</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">細項目類別</label>
-                            <select v-model="formTask.subCategory" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                                <option v-for="sub in (subCategoryOptions[formTask.category] || [])" :key="sub" :value="sub">{{ sub }}</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">優先等級</label>
-                            <select v-model="formTask.priority" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                                <option value="高">高 (High)</option>
-                                <option value="中">中 (Medium)</option>
-                                <option value="低">低 (Low)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">當前進度</label>
-                            <select v-model="formTask.status" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                        <!-- Right Section: Progress & Actions -->
+                        <div class="flex items-center justify-between md:justify-end space-x-3 pt-2 md:pt-0 border-t md:border-t-0 border-stone-100 dark:border-stone-700/50 flex-shrink-0">
+                            
+                            <!-- Status Selector Dropdown -->
+                            <select v-model="task.status" @change="saveTasks()" class="text-xs bg-stone-100 dark:bg-stone-700 text-stone-700 dark:text-stone-200 border-none rounded-xl px-2.5 py-1.5 focus:ring-1 focus:ring-amber-400 font-medium">
                                 <option value="未開始">未開始</option>
                                 <option value="進行中">進行中</option>
                                 <option value="已完成">已完成</option>
                                 <option value="暫緩">暫緩</option>
                             </select>
-                        </div>
 
-                        <!-- Approval Status Dropdown -->
-                        <div>
-                            <label class="block font-semibold text-purple-900 dark:text-purple-300 mb-1">主管簽核/確認需求</label>
-                            <select v-model="formTask.approvalStatus" class="w-full px-3 py-2 rounded-xl bg-purple-50/60 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-900 dark:text-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium">
-                                <option value="無">無須確認</option>
-                                <option value="需與組長確認">需與組長確認</option>
-                                <option value="需與主任確認">需與主任確認</option>
-                                <option value="已完成確認">已完成確認</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- EXPENSE SPECIAL FIELDS IN MODAL -->
-                    <div v-if="formTask.subCategory === '費用'" class="p-3 bg-blue-50/80 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800/80 space-y-3">
-                        <div class="font-bold text-blue-900 dark:text-blue-300 flex items-center space-x-1.5">
-                            <i class="fa-solid fa-receipt"></i>
-                            <span>費用核銷專屬資訊</span>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">送至會計室日期</label>
-                                <input type="date" v-model="formTask.accountingDate" class="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-stone-900 border border-blue-200 dark:border-stone-700 focus:outline-none">
-                            </div>
-                            <div>
-                                <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">核銷狀態</label>
-                                <select v-model="formTask.expenseStatus" class="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-stone-900 border border-blue-200 dark:border-stone-700 focus:outline-none font-medium">
-                                    <option value="已開立">已開立</option>
-                                    <option value="會計確認">會計確認</option>
-                                    <option value="費用轉彙總">費用轉彙總</option>
-                                    <option value="出納">出納</option>
-                                    <option value="完成">完成</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">備註 / 執行記錄 (可附網址)</label>
-                        <textarea v-model="formTask.notes" rows="2" placeholder="公文文號、系統網址 (如 https://his.cmuh.org.tw/webapp/app/)..." class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400"></textarea>
-                    </div>
-
-                    <!-- History logs inside modal -->
-                    <div v-if="editingTaskId && formTask.history && formTask.history.length > 0">
-                        <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">歷史執行歷程 ({{ formTask.history.length }})</label>
-                        <div class="max-h-32 overflow-y-auto space-y-1.5 p-2 bg-stone-50 dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-700">
-                            <div v-for="log in formTask.history" :key="log.id" class="text-xs bg-white dark:bg-stone-800 p-2 rounded-lg border border-stone-100 dark:border-stone-700 flex justify-between items-start">
-                                <div>
-                                    <span class="text-[10px] text-amber-600 font-mono block">{{ log.timestamp }}</span>
-                                    <span class="text-stone-700 dark:text-stone-300">{{ log.content }}</span>
-                                </div>
-                                <button @click="deleteModalHistoryLog(log.id)" class="text-stone-400 hover:text-rose-500 text-xs ml-2">
+                            <!-- Actions -->
+                            <div class="flex items-center space-x-1">
+                                <button v-if="task.status !== '已完成'" @click="moveToTomorrow(task)" title="移至明天" class="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-stone-700 rounded-lg transition text-xs">
+                                    <i class="fa-solid fa-forward-step"></i>
+                                </button>
+                                <button @click="editTask(task)" title="編輯" class="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-stone-700 rounded-lg transition text-xs">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button @click="deleteTask(task.id)" title="刪除" class="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-stone-700 rounded-lg transition text-xs">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
+            </main>
 
-                <div class="flex justify-end space-x-2 pt-3 border-t border-stone-100 dark:border-stone-700">
-                    <button @click="showTaskModal = false" class="px-4 py-2 rounded-xl border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 text-xs font-medium hover:bg-stone-100">取消</button>
-                    <button @click="saveFormTask()" class="px-4 py-2 rounded-xl bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 shadow-xs">儲存事項</button>
-                </div>
-            </div>
-        </div>
+            <!-- Change Password Modal -->
+            <div v-if="showChangePasswordModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 no-print">
+                <div class="bg-white dark:bg-stone-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-700 space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-700">
+                        <h3 class="font-bold text-base text-stone-800 dark:text-stone-100 flex items-center gap-1.5">
+                            <i class="fa-solid fa-key text-amber-500"></i> 修改存取密碼
+                        </h3>
+                        <button @click="showChangePasswordModal = false" class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
 
-        <!-- Export Work Log Center Modal -->
-        <div v-if="showExportModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 no-print overflow-y-auto">
-            <div class="bg-white dark:bg-stone-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-700 space-y-5 my-8">
-                
-                <div class="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-700">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                            <i class="fa-solid fa-file-export"></i>
-                        </div>
+                    <div class="space-y-3 text-xs">
                         <div>
-                            <h3 class="font-bold text-base text-stone-800 dark:text-stone-100">工作日誌匯出中心</h3>
-                            <p class="text-xs text-stone-400">自訂日期區間與匯出樣式</p>
+                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">請輸入新密碼</label>
+                            <input type="password" v-model="newPasswordInput" placeholder="輸入新密碼..." class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
                         </div>
                     </div>
-                    <button @click="showExportModal = false" class="text-stone-400 hover:text-stone-600">
-                        <i class="fa-solid fa-xmark text-lg"></i>
-                    </button>
+
+                    <div class="flex justify-end space-x-2 pt-2 border-t border-stone-100 dark:border-stone-700">
+                        <button @click="showChangePasswordModal = false" class="px-4 py-2 rounded-xl border border-stone-200 text-stone-600 dark:text-stone-300 text-xs font-medium hover:bg-stone-100">取消</button>
+                        <button @click="saveNewPassword()" class="px-4 py-2 rounded-xl bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 shadow-xs">儲存新密碼</button>
+                    </div>
                 </div>
+            </div>
 
-                <!-- Range Selector -->
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <label class="text-xs font-semibold text-stone-700 dark:text-stone-300">選擇匯出區間：</label>
-                        <div class="flex space-x-1.5">
-                            <button @click="setExportRange('today')" class="text-[11px] px-2 py-1 rounded bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 text-stone-600 dark:text-stone-300">今日</button>
-                            <button @click="setExportRange('week')" class="text-[11px] px-2 py-1 rounded bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 text-stone-600 dark:text-stone-300">本週</button>
-                            <button @click="setExportRange('month')" class="text-[11px] px-2 py-1 rounded bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 text-stone-600 dark:text-stone-300">本月</button>
-                        </div>
+            <!-- Task Edit / Create Modal -->
+            <div v-if="showTaskModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 no-print">
+                <div class="bg-white dark:bg-stone-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-700 space-y-4 max-h-[90vh] overflow-y-auto">
+                    <div class="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-700 sticky top-0 bg-white dark:bg-stone-800 z-10">
+                        <h3 class="font-bold text-base text-stone-800 dark:text-stone-100">
+                            {{ editingTaskId ? '編輯待辦事項' : '新增待辦事項' }}
+                        </h3>
+                        <button @click="showTaskModal = false" class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-3.5 text-xs">
                         <div>
-                            <span class="text-xs text-stone-500 mb-1 block">開始日期</span>
-                            <input type="date" v-model="exportStartDate" class="w-full text-xs px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700">
+                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">事項標題 *</label>
+                            <input type="text" v-model="formTask.title" placeholder="例如: 8月份計程車資核銷、公文線上簽核..." class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm">
                         </div>
-                        <div>
-                            <span class="text-xs text-stone-500 mb-1 block">結束日期</span>
-                            <input type="date" v-model="exportEndDate" class="w-full text-xs px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700">
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Export Filter Options -->
-                <div class="bg-stone-50 dark:bg-stone-900/60 p-3.5 rounded-xl border border-stone-100 dark:border-stone-700 space-y-2 text-xs">
-                    <div class="font-semibold text-stone-700 dark:text-stone-300 mb-1">內容過濾設定：</div>
-                    <label class="flex items-center space-x-2 text-stone-600 dark:text-stone-300 cursor-pointer">
-                        <input type="checkbox" v-model="exportOnlyCompleted" class="rounded text-amber-600 focus:ring-amber-500">
-                        <span>僅匯出「已完成」事項</span>
-                    </label>
-                    <label class="flex items-center space-x-2 text-stone-600 dark:text-stone-300 cursor-pointer">
-                        <input type="checkbox" v-model="exportIncludeNotes" class="rounded text-amber-600 focus:ring-amber-500">
-                        <span>包含備註、費用核銷細節與執行歷程</span>
-                    </label>
-                </div>
-
-                <!-- Matching Summary Stats -->
-                <div class="flex items-center justify-between text-xs text-stone-500 bg-amber-50/50 dark:bg-stone-900/40 px-3.5 py-2.5 rounded-xl border border-amber-100 dark:border-stone-700">
-                    <span>此區間共有 <strong class="text-amber-600 dark:text-amber-400 font-bold">{{ exportTasksMatch.length }}</strong> 筆待辦紀錄</span>
-                    <button @click="generateAISummary()" :disabled="isGeneratingAI" class="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg font-medium transition flex items-center space-x-1.5">
-                        <i v-if="isGeneratingAI" class="fa-solid fa-spinner animate-spin"></i>
-                        <i v-else class="fa-solid fa-wand-magic-sparkles"></i>
-                        <span>AI 產出工作成果摘要</span>
-                    </button>
-                </div>
-
-                <!-- AI Summary Output Box (If Generated) -->
-                <div v-if="aiSummaryText" class="p-3.5 bg-amber-50/60 dark:bg-stone-900/60 rounded-xl border border-amber-200 dark:border-stone-700 text-xs space-y-1.5">
-                    <div class="flex items-center justify-between font-bold text-amber-900 dark:text-amber-300">
-                        <span><i class="fa-solid fa-robot mr-1"></i> Gemini AI 整理日誌摘要：</span>
-                        <button @click="copyText(aiSummaryText)" class="text-[11px] text-amber-700 hover:underline">複製摘要</button>
-                    </div>
-                    <p class="text-stone-700 dark:text-stone-300 whitespace-pre-line leading-relaxed">{{ aiSummaryText }}</p>
-                </div>
-
-                <!-- Export Action Buttons -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                    <button @click="exportPDF()" class="py-2.5 px-3 rounded-xl bg-stone-900 dark:bg-stone-100 dark:text-stone-900 text-white text-xs font-semibold hover:bg-stone-800 flex items-center justify-center space-x-2 shadow-xs">
-                        <i class="fa-solid fa-print"></i>
-                        <span>PDF / 列印預覽</span>
-                    </button>
-                    <button @click="exportCSV()" class="py-2.5 px-3 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 flex items-center justify-center space-x-2 shadow-xs">
-                        <i class="fa-solid fa-file-csv"></i>
-                        <span>下載 CSV 表格</span>
-                    </button>
-                    <button @click="exportMarkdown()" class="py-2.5 px-3 rounded-xl bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 flex items-center justify-center space-x-2 shadow-xs">
-                        <i class="fa-solid fa-copy"></i>
-                        <span>複製 Markdown 格式</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- PRINT ONLY VIEW (Rendered for Window.print / PDF Export) -->
-        <div class="print-only p-8 max-w-4xl mx-auto">
-            <div class="text-center border-b pb-4 mb-6">
-                <h1 class="text-2xl font-bold text-stone-900">yuan 工作日誌報告</h1>
-                <p class="text-sm text-stone-600 mt-1">區間: {{ exportStartDate }} ~ {{ exportEndDate }} | 產出日期: {{ todayStr }}</p>
-            </div>
-
-            <!-- AI Summary section in Print if present -->
-            <div v-if="aiSummaryText" class="mb-6 p-4 bg-stone-50 border rounded-xl">
-                <h3 class="font-bold text-sm text-stone-800 mb-1">【重點成果與執行摘要】</h3>
-                <p class="text-xs text-stone-700 whitespace-pre-line leading-relaxed">{{ aiSummaryText }}</p>
-            </div>
-
-            <!-- Task List Table for Print -->
-            <table class="w-full text-left text-xs border-collapse">
-                <thead>
-                    <tr class="bg-stone-100 border-b">
-                        <th class="py-2 px-3 font-semibold">日期</th>
-                        <th class="py-2 px-3 font-semibold">業務分類 (細項)</th>
-                        <th class="py-2 px-3 font-semibold">事項名稱</th>
-                        <th class="py-2 px-3 font-semibold">簽核需求</th>
-                        <th class="py-2 px-3 font-semibold">進度/費用關卡</th>
-                        <th class="py-2 px-3 font-semibold">備註與執行歷程</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y">
-                    <tr v-for="t in exportTasksMatch" :key="t.id">
-                        <td class="py-2 px-3 whitespace-nowrap">{{ t.date }}</td>
-                        <td class="py-2 px-3 whitespace-nowrap font-medium">{{ t.category }} <span v-if="t.subCategory" class="text-stone-500">({{ t.subCategory }})</span></td>
-                        <td class="py-2 px-3 font-medium">{{ t.title }}</td>
-                        <td class="py-2 px-3 whitespace-nowrap">{{ t.approvalStatus && t.approvalStatus !== '無' ? t.approvalStatus : '-' }}</td>
-                        <td class="py-2 px-3 whitespace-nowrap">
-                            <div>{{ t.status }}</div>
-                            <div v-if="t.subCategory === '費用'" class="text-[10px] text-blue-700 font-semibold">
-                                送會計: {{ t.accountingDate || '未定' }} | 關卡: {{ t.expenseStatus || '已開立' }}
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">執行日期</label>
+                                <input type="date" v-model="formTask.date" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
                             </div>
-                        </td>
-                        <td class="py-2 px-3">
-                            <div>{{ t.notes || '-' }}</div>
-                            <div v-if="t.history && t.history.length > 0" class="mt-1 pt-1 border-t border-stone-200 text-[10px] text-stone-600 space-y-0.5">
-                                <div class="font-bold text-stone-700">執行歷程：</div>
-                                <div v-for="h in t.history" :key="h.id">
-                                    • <span class="font-mono">{{ h.timestamp }}</span>: {{ h.content }}
+                            <div>
+                                <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">主業務類別</label>
+                                <select v-model="formTask.category" @change="onCategoryChange()" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium">
+                                    <option value="行政業務">行政業務</option>
+                                    <option value="人事業務">人事業務</option>
+                                    <option value="QMS">QMS</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">細項目類別</label>
+                                <select v-model="formTask.subCategory" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                    <option v-for="sub in (subCategoryOptions[formTask.category] || [])" :key="sub" :value="sub">{{ sub }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">優先等級</label>
+                                <select v-model="formTask.priority" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                    <option value="高">高 (High)</option>
+                                    <option value="中">中 (Medium)</option>
+                                    <option value="低">低 (Low)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">當前進度</label>
+                                <select v-model="formTask.status" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                    <option value="未開始">未開始</option>
+                                    <option value="進行中">進行中</option>
+                                    <option value="已完成">已完成</option>
+                                    <option value="暫緩">暫緩</option>
+                                </select>
+                            </div>
+
+                            <!-- Approval Status Dropdown -->
+                            <div>
+                                <label class="block font-semibold text-purple-900 dark:text-purple-300 mb-1">主管簽核/確認需求</label>
+                                <select v-model="formTask.approvalStatus" class="w-full px-3 py-2 rounded-xl bg-purple-50/60 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-900 dark:text-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium">
+                                    <option value="無">無須確認</option>
+                                    <option value="需與組長確認">需與組長確認</option>
+                                    <option value="需與主任確認">需與主任確認</option>
+                                    <option value="已完成確認">已完成確認</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- EXPENSE SPECIAL FIELDS IN MODAL -->
+                        <div v-if="formTask.subCategory === '費用'" class="p-3 bg-blue-50/80 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800/80 space-y-3">
+                            <div class="font-bold text-blue-900 dark:text-blue-300 flex items-center space-x-1.5">
+                                <i class="fa-solid fa-receipt"></i>
+                                <span>費用核銷專屬資訊</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">送至會計室日期</label>
+                                    <input type="date" v-model="formTask.accountingDate" class="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-stone-900 border border-blue-200 dark:border-stone-700 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">核銷狀態</label>
+                                    <select v-model="formTask.expenseStatus" class="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-stone-900 border border-blue-200 dark:border-stone-700 focus:outline-none font-medium">
+                                        <option value="已開立">已開立</option>
+                                        <option value="會計確認">會計確認</option>
+                                        <option value="費用轉彙總">費用轉彙總</option>
+                                        <option value="出納">出納</option>
+                                        <option value="完成">完成</option>
+                                    </select>
                                 </div>
                             </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                        </div>
 
-            <div class="mt-8 pt-4 border-t flex justify-between text-[11px] text-stone-500">
-                <span>報告核閱簽章：__________________</span>
-                <span>yuan 代辦事項系統自動生成</span>
+                        <div>
+                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">備註 / 執行記錄 (可附網址)</label>
+                            <textarea v-model="formTask.notes" rows="2" placeholder="公文文號、系統網址 (如 https://his.cmuh.org.tw/webapp/app/)..." class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400"></textarea>
+                        </div>
+
+                        <!-- History logs inside modal -->
+                        <div v-if="editingTaskId && formTask.history && formTask.history.length > 0">
+                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">歷史執行歷程 ({{ formTask.history.length }})</label>
+                            <div class="max-h-32 overflow-y-auto space-y-1.5 p-2 bg-stone-50 dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-700">
+                                <div v-for="log in formTask.history" :key="log.id" class="text-xs bg-white dark:bg-stone-800 p-2 rounded-lg border border-stone-100 dark:border-stone-700 flex justify-between items-start">
+                                    <div>
+                                        <span class="text-[10px] text-amber-600 font-mono block">{{ log.timestamp }}</span>
+                                        <span class="text-stone-700 dark:text-stone-300">{{ log.content }}</span>
+                                    </div>
+                                    <button @click="deleteModalHistoryLog(log.id)" class="text-stone-400 hover:text-rose-500 text-xs ml-2">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-2 pt-3 border-t border-stone-100 dark:border-stone-700">
+                        <button @click="showTaskModal = false" class="px-4 py-2 rounded-xl border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 text-xs font-medium hover:bg-stone-100">取消</button>
+                        <button @click="saveFormTask()" class="px-4 py-2 rounded-xl bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 shadow-xs">儲存事項</button>
+                    </div>
+                </div>
             </div>
-        </div>
+
+            <!-- Export Work Log Center Modal -->
+            <div v-if="showExportModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 no-print overflow-y-auto">
+                <div class="bg-white dark:bg-stone-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-700 space-y-5 my-8">
+                    
+                    <div class="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-700">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                <i class="fa-solid fa-file-export"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-base text-stone-800 dark:text-stone-100">工作日誌匯出中心</h3>
+                                <p class="text-xs text-stone-400">自訂日期區間與匯出樣式</p>
+                            </div>
+                        </div>
+                        <button @click="showExportModal = false" class="text-stone-400 hover:text-stone-600">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+
+                    <!-- Range Selector -->
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-semibold text-stone-700 dark:text-stone-300">選擇匯出區間：</label>
+                            <div class="flex space-x-1.5">
+                                <button @click="setExportRange('today')" class="text-[11px] px-2 py-1 rounded bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 text-stone-600 dark:text-stone-300">今日</button>
+                                <button @click="setExportRange('week')" class="text-[11px] px-2 py-1 rounded bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 text-stone-600 dark:text-stone-300">本週</button>
+                                <button @click="setExportRange('month')" class="text-[11px] px-2 py-1 rounded bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 text-stone-600 dark:text-stone-300">本月</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <span class="text-xs text-stone-500 mb-1 block">開始日期</span>
+                                <input type="date" v-model="exportStartDate" class="w-full text-xs px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700">
+                            </div>
+                            <div>
+                                <span class="text-xs text-stone-500 mb-1 block">結束日期</span>
+                                <input type="date" v-model="exportEndDate" class="w-full text-xs px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Filter Options -->
+                    <div class="bg-stone-50 dark:bg-stone-900/60 p-3.5 rounded-xl border border-stone-100 dark:border-stone-700 space-y-2 text-xs">
+                        <div class="font-semibold text-stone-700 dark:text-stone-300 mb-1">內容過濾設定：</div>
+                        <label class="flex items-center space-x-2 text-stone-600 dark:text-stone-300 cursor-pointer">
+                            <input type="checkbox" v-model="exportOnlyCompleted" class="rounded text-amber-600 focus:ring-amber-500">
+                            <span>僅匯出「已完成」事項</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-stone-600 dark:text-stone-300 cursor-pointer">
+                            <input type="checkbox" v-model="exportIncludeNotes" class="rounded text-amber-600 focus:ring-amber-500">
+                            <span>包含備註、費用核銷細節與執行歷程</span>
+                        </label>
+                    </div>
+
+                    <!-- Matching Summary Stats -->
+                    <div class="flex items-center justify-between text-xs text-stone-500 bg-amber-50/50 dark:bg-stone-900/40 px-3.5 py-2.5 rounded-xl border border-amber-100 dark:border-stone-700">
+                        <span>此區間共有 <strong class="text-amber-600 dark:text-amber-400 font-bold">{{ exportTasksMatch.length }}</strong> 筆待辦紀錄</span>
+                        <button @click="generateAISummary()" :disabled="isGeneratingAI" class="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg font-medium transition flex items-center space-x-1.5">
+                            <i v-if="isGeneratingAI" class="fa-solid fa-spinner animate-spin"></i>
+                            <i v-else class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>AI 產出工作成果摘要</span>
+                        </button>
+                    </div>
+
+                    <!-- AI Summary Output Box (If Generated) -->
+                    <div v-if="aiSummaryText" class="p-3.5 bg-amber-50/60 dark:bg-stone-900/60 rounded-xl border border-amber-200 dark:border-stone-700 text-xs space-y-1.5">
+                        <div class="flex items-center justify-between font-bold text-amber-900 dark:text-amber-300">
+                            <span><i class="fa-solid fa-robot mr-1"></i> Gemini AI 整理日誌摘要：</span>
+                            <button @click="copyText(aiSummaryText)" class="text-[11px] text-amber-700 hover:underline">複製摘要</button>
+                        </div>
+                        <p class="text-stone-700 dark:text-stone-300 whitespace-pre-line leading-relaxed">{{ aiSummaryText }}</p>
+                    </div>
+
+                    <!-- Export Action Buttons -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                        <button @click="exportPDF()" class="py-2.5 px-3 rounded-xl bg-stone-900 dark:bg-stone-100 dark:text-stone-900 text-white text-xs font-semibold hover:bg-stone-800 flex items-center justify-center space-x-2 shadow-xs">
+                            <i class="fa-solid fa-print"></i>
+                            <span>PDF / 列印預覽</span>
+                        </button>
+                        <button @click="exportCSV()" class="py-2.5 px-3 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 flex items-center justify-center space-x-2 shadow-xs">
+                            <i class="fa-solid fa-file-csv"></i>
+                            <span>下載 CSV 表格</span>
+                        </button>
+                        <button @click="exportMarkdown()" class="py-2.5 px-3 rounded-xl bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 flex items-center justify-center space-x-2 shadow-xs">
+                            <i class="fa-solid fa-copy"></i>
+                            <span>複製 Markdown 格式</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRINT ONLY VIEW (Rendered for Window.print / PDF Export) -->
+            <div class="print-only p-8 max-w-4xl mx-auto">
+                <div class="text-center border-b pb-4 mb-6">
+                    <h1 class="text-2xl font-bold text-stone-900">yuan 工作日誌報告</h1>
+                    <p class="text-sm text-stone-600 mt-1">區間: {{ exportStartDate }} ~ {{ exportEndDate }} | 產出日期: {{ todayStr }}</p>
+                </div>
+
+                <!-- AI Summary section in Print if present -->
+                <div v-if="aiSummaryText" class="mb-6 p-4 bg-stone-50 border rounded-xl">
+                    <h3 class="font-bold text-sm text-stone-800 mb-1">【重點成果與執行摘要】</h3>
+                    <p class="text-xs text-stone-700 whitespace-pre-line leading-relaxed">{{ aiSummaryText }}</p>
+                </div>
+
+                <!-- Task List Table for Print -->
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-stone-100 border-b">
+                            <th class="py-2 px-3 font-semibold">日期</th>
+                            <th class="py-2 px-3 font-semibold">業務分類 (細項)</th>
+                            <th class="py-2 px-3 font-semibold">事項名稱</th>
+                            <th class="py-2 px-3 font-semibold">簽核需求</th>
+                            <th class="py-2 px-3 font-semibold">進度/費用關卡</th>
+                            <th class="py-2 px-3 font-semibold">備註與執行歷程</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        <tr v-for="t in exportTasksMatch" :key="t.id">
+                            <td class="py-2 px-3 whitespace-nowrap">{{ t.date }}</td>
+                            <td class="py-2 px-3 whitespace-nowrap font-medium">{{ t.category }} <span v-if="t.subCategory" class="text-stone-500">({{ t.subCategory }})</span></td>
+                            <td class="py-2 px-3 font-medium">{{ t.title }}</td>
+                            <td class="py-2 px-3 whitespace-nowrap">{{ t.approvalStatus && t.approvalStatus !== '無' ? t.approvalStatus : '-' }}</td>
+                            <td class="py-2 px-3 whitespace-nowrap">
+                                <div>{{ t.status }}</div>
+                                <div v-if="t.subCategory === '費用'" class="text-[10px] text-blue-700 font-semibold">
+                                    送會計: {{ t.accountingDate || '未定' }} | 關卡: {{ t.expenseStatus || '已開立' }}
+                                </div>
+                            </td>
+                            <td class="py-2 px-3">
+                                <div>{{ t.notes || '-' }}</div>
+                                <div v-if="t.history && t.history.length > 0" class="mt-1 pt-1 border-t border-stone-200 text-[10px] text-stone-600 space-y-0.5">
+                                    <div class="font-bold text-stone-700">執行歷程：</div>
+                                    <div v-for="h in t.history" :key="h.id">
+                                        • <span class="font-mono">{{ h.timestamp }}</span>: {{ h.content }}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="mt-8 pt-4 border-t flex justify-between text-[11px] text-stone-500">
+                    <span>報告核閱簽章：__________________</span>
+                    <span>yuan 代辦事項系統自動生成</span>
+                </div>
+            </div>
+        </template>
 
         <!-- Toast Message Notification -->
         <div v-if="toastMsg" class="fixed bottom-5 right-5 bg-stone-900 text-white text-xs px-4 py-2.5 rounded-xl shadow-xl z-50 no-print flex items-center space-x-2 animate-bounce">
@@ -698,6 +779,52 @@
 
         createApp({
             setup() {
+                // System Security Password Management
+                const DEFAULT_PASS = '0527';
+                const PASS_KEY = 'yuan_todo_app_pass_v1';
+                const isLocked = ref(true);
+                const inputPassword = ref('');
+                const showPassword = ref(false);
+                const lockErrorMsg = ref('');
+                const showChangePasswordModal = ref(false);
+                const newPasswordInput = ref('');
+
+                const getSavedPassword = () => {
+                    return localStorage.getItem(PASS_KEY) || DEFAULT_PASS;
+                };
+
+                const verifyPassword = () => {
+                    const saved = getSavedPassword();
+                    if (inputPassword.value === saved) {
+                        isLocked.value = false;
+                        inputPassword.value = '';
+                        lockErrorMsg.value = '';
+                        showToast('解鎖成功 🐾');
+                    } else {
+                        lockErrorMsg.value = '密碼不正確，請重新輸入';
+                    }
+                };
+
+                const lockSystem = () => {
+                    isLocked.value = true;
+                    showToast('系統已安全鎖定');
+                };
+
+                const openChangePasswordModal = () => {
+                    newPasswordInput.value = '';
+                    showChangePasswordModal.value = true;
+                };
+
+                const saveNewPassword = () => {
+                    if (!newPasswordInput.value.trim()) {
+                        showToast('密碼不能為空');
+                        return;
+                    }
+                    localStorage.setItem(PASS_KEY, newPasswordInput.value.trim());
+                    showChangePasswordModal.value = false;
+                    showToast('存取密碼已成功變更！');
+                };
+
                 // Date Helpers
                 const getTodayStr = () => new Date().toISOString().split('T')[0];
                 const getNowFormatted = () => {
@@ -912,7 +1039,6 @@
                     return tasks.value.filter(t => {
                         if (currentTab.value === 'daily' && t.date !== selectedDate.value) return false;
                         
-                        // If pending approval filter active
                         if (filterPendingApproval.value) {
                             if (t.approvalStatus !== '需與組長確認' && t.approvalStatus !== '需與主任確認') return false;
                         }
@@ -932,14 +1058,14 @@
                         }
                         return true;
                     }).sort((a, b) => {
-                        // Level 1: Completed status check (0 = active, 1 = completed)
+                        // Level 1: Strict Completed Status Check (0 = Active, 1 = Completed)
                         const aDone = a.status === '已完成' ? 1 : 0;
                         const bDone = b.status === '已完成' ? 1 : 0;
                         if (aDone !== bDone) {
-                            return aDone - bDone; // Completed (1) moves after Active (0)
+                            return aDone - bDone; // Active (0) moves up, Completed (1) moves down
                         }
 
-                        // Level 2: Priority rank (High=1, Medium=2, Low=3)
+                        // Level 2: Priority Rank
                         const aPrio = priorityWeight[a.priority] || 2;
                         const bPrio = priorityWeight[b.priority] || 2;
                         return aPrio - bPrio;
@@ -1314,6 +1440,16 @@
                 });
 
                 return {
+                    isLocked,
+                    inputPassword,
+                    showPassword,
+                    lockErrorMsg,
+                    showChangePasswordModal,
+                    newPasswordInput,
+                    verifyPassword,
+                    lockSystem,
+                    openChangePasswordModal,
+                    saveNewPassword,
                     currentTab,
                     selectedDate,
                     searchQuery,
