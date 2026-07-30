@@ -32,7 +32,7 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- FontAwesome Icons CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Inter & Noto Sans TC for Korean/Asian Clean Typography -->
+    <!-- Google Fonts: Inter & Noto Sans TC -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Noto Sans TC', 'Inter', system-ui, -apple-system, sans-serif; }
@@ -161,13 +161,25 @@
                 </div>
             </div>
 
+            <!-- Category Filter Bar -->
             <div class="mb-6 space-y-3">
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="text-xs font-semibold text-stone-400 uppercase tracking-wider mr-1">主業務:</span>
                     <button v-for="cat in mainCategories" :key="cat" @click="selectMainCategory(cat)" 
-                        :class="filterCategory === cat ? 'bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 font-semibold shadow-xs' : 'bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700 hover:bg-stone-100'" 
+                        :class="filterCategory === cat && !filterPendingApproval ? 'bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 font-semibold shadow-xs' : 'bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700 hover:bg-stone-100'" 
                         class="px-3.5 py-1.5 rounded-xl text-xs transition">
                         {{ cat === 'ALL' ? '全部' : cat }}
+                    </button>
+
+                    <!-- Quick Filter Button for Pending Supervisor Confirmations -->
+                    <button @click="togglePendingApprovalFilter()" 
+                        :class="filterPendingApproval ? 'bg-purple-600 text-white font-bold shadow-xs' : 'bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100'" 
+                        class="px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-1.5 ml-auto sm:ml-2">
+                        <i class="fa-solid fa-user-check"></i>
+                        <span>待長官確認</span>
+                        <span v-if="pendingApprovalCount > 0" class="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-200 dark:bg-purple-800 text-purple-900 dark:text-purple-100 font-extrabold">
+                            {{ pendingApprovalCount }}
+                        </span>
                     </button>
                 </div>
 
@@ -188,10 +200,11 @@
 
                 <div class="relative w-full sm:w-64 pt-1">
                     <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-4 text-xs text-stone-400"></i>
-                    <input type="text" v-model="searchQuery" placeholder="搜尋事項或備註..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                    <input type="text" v-model="searchQuery" placeholder="搜尋事項、核銷單、備註..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
                 </div>
             </div>
 
+            <!-- Empty State -->
             <div v-if="filteredTasks.length === 0" class="text-center py-16 bg-white dark:bg-stone-800 rounded-2xl border border-dashed border-stone-300 dark:border-stone-700 my-4">
                 <div class="w-16 h-16 bg-amber-50 dark:bg-stone-700 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-3">
                     <i class="fa-regular fa-clipboard text-2xl"></i>
@@ -208,10 +221,11 @@
                 </div>
             </div>
 
+            <!-- Task List -->
             <div v-else class="space-y-3">
                 <div v-for="task in filteredTasks" :key="task.id" 
                     :class="[
-                        'bg-white dark:bg-stone-800 rounded-2xl p-4 sm:p-5 border transition-all duration-200 shadow-xs hover:shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4',
+                        'bg-white dark:bg-stone-800 rounded-2xl p-4 sm:p-5 border transition-all duration-200 shadow-xs hover:shadow-md flex flex-col md:flex-row md:items-start justify-between gap-4',
                         task.status === '已完成' ? 'border-stone-200 dark:border-stone-700/60 bg-stone-50/50 dark:bg-stone-800/40 opacity-75' : 'border-stone-200/80 dark:border-stone-700'
                     ]">
                     
@@ -235,6 +249,28 @@
                                     {{ task.title }}
                                 </span>
 
+                                <!-- Approval Requirement Badge with Quick Action -->
+                                <div v-if="task.approvalStatus && task.approvalStatus !== '無'" class="flex items-center gap-1">
+                                    <span :class="[
+                                        task.approvalStatus === '已完成確認' 
+                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-200' 
+                                            : 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border-purple-200',
+                                        'border text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1'
+                                    ]">
+                                        <i :class="task.approvalStatus === '已完成確認' ? 'fa-solid fa-circle-check' : 'fa-solid fa-user-clock'" class="text-[9px]"></i>
+                                        {{ task.approvalStatus }}
+                                    </span>
+                                    
+                                    <!-- Quick Confirm Toggle Button on Card -->
+                                    <button v-if="task.approvalStatus === '需與組長確認' || task.approvalStatus === '需與主任確認'" 
+                                        @click="quickConfirmApproval(task)" 
+                                        title="點擊改為已完成確認"
+                                        class="text-[10px] bg-purple-600 hover:bg-purple-700 text-white px-2 py-0.5 rounded-full font-medium transition flex items-center gap-0.5 shadow-2xs">
+                                        <i class="fa-solid fa-check text-[8px]"></i>
+                                        <span>完成確認</span>
+                                    </button>
+                                </div>
+
                                 <!-- Priority Tag -->
                                 <span :class="getPriorityClass(task.priority)" class="text-[10px] px-2 py-0.5 rounded-full font-bold">
                                     {{ task.priority }}優先
@@ -256,8 +292,46 @@
                                 </span>
                             </div>
 
+                            <!-- EXPENSE WORKFLOW SPECIAL DISPLAY BOX -->
+                            <div v-if="task.subCategory === '費用'" class="mt-2.5 bg-blue-50/70 dark:bg-blue-950/30 p-3 rounded-2xl border border-blue-100 dark:border-blue-900/50 space-y-2">
+                                <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                                    <div class="flex items-center space-x-2 text-blue-900 dark:text-blue-200 font-semibold">
+                                        <i class="fa-solid fa-file-invoice-dollar text-blue-600 dark:text-blue-400"></i>
+                                        <span>費用核銷追蹤：</span>
+                                        <span v-if="task.accountingDate" class="bg-white dark:bg-stone-800 px-2 py-0.5 rounded-lg text-[11px] border border-blue-200 text-blue-800 dark:text-blue-300">
+                                            <i class="fa-solid fa-paper-plane mr-1 text-[10px]"></i>送會計室: {{ task.accountingDate }}
+                                        </span>
+                                        <span v-else class="text-[11px] text-stone-400 font-normal italic">未標記送會計日期</span>
+                                    </div>
+
+                                    <!-- Quick Expense Status Dropdown -->
+                                    <div class="flex items-center space-x-1.5">
+                                        <span class="text-[11px] text-blue-700 dark:text-blue-300 font-medium">當前核銷進度:</span>
+                                        <select v-model="task.expenseStatus" @change="saveTasks()" class="text-xs bg-white dark:bg-stone-800 text-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-800 rounded-xl px-2 py-1 font-bold focus:ring-1 focus:ring-blue-400 shadow-2xs">
+                                            <option value="已開立">已開立</option>
+                                            <option value="會計確認">會計確認</option>
+                                            <option value="費用轉彙總">費用轉彙總</option>
+                                            <option value="出納">出納</option>
+                                            <option value="完成">完成</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Expense Visual Step Tracker -->
+                                <div class="grid grid-cols-5 gap-1 pt-1 text-center text-[10px]">
+                                    <div v-for="step in expenseSteps" :key="step" 
+                                        :class="[
+                                            'py-1 px-1 rounded-lg font-medium transition-all flex flex-col items-center justify-center gap-0.5',
+                                            isExpenseStepActive(task.expenseStatus, step) ? 'bg-blue-600 text-white shadow-2xs font-bold' : 'bg-white/80 dark:bg-stone-800/80 text-stone-400 border border-blue-100/50'
+                                        ]">
+                                        <span>{{ step }}</span>
+                                        <i v-if="isExpenseStepActive(task.expenseStatus, step)" class="fa-solid fa-circle-check text-[8px]"></i>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Notes / Remarks (With Clickable URL Support) -->
-                            <div v-if="task.notes" class="text-xs text-stone-600 dark:text-stone-400 mt-2 whitespace-pre-line bg-stone-50 dark:bg-stone-900/40 p-2.5 rounded-xl border border-stone-100 dark:border-stone-800/80">
+                            <div v-if="task.notes" class="text-xs text-stone-600 dark:text-stone-400 mt-2.5 whitespace-pre-line bg-stone-50 dark:bg-stone-900/40 p-2.5 rounded-xl border border-stone-100 dark:border-stone-800/80">
                                 <i class="fa-regular fa-note-sticky text-amber-500 mr-1.5"></i><span v-html="renderNotesWithLinks(task.notes)"></span>
                             </div>
 
@@ -336,9 +410,10 @@
             </div>
         </main>
 
+        <!-- Task Edit / Create Modal -->
         <div v-if="showTaskModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 no-print">
-            <div class="bg-white dark:bg-stone-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-700 space-y-4">
-                <div class="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-700">
+            <div class="bg-white dark:bg-stone-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-700 space-y-4 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-700 sticky top-0 bg-white dark:bg-stone-800 z-10">
                     <h3 class="font-bold text-base text-stone-800 dark:text-stone-100">
                         {{ editingTaskId ? '編輯待辦事項' : '新增待辦事項' }}
                     </h3>
@@ -350,7 +425,7 @@
                 <div class="space-y-3.5 text-xs">
                     <div>
                         <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">事項標題 *</label>
-                        <input type="text" v-model="formTask.title" placeholder="例如: 每日線上填寫單位設施檢核表..." class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm">
+                        <input type="text" v-model="formTask.title" placeholder="例如: 8月份計程車資核銷、公文線上簽核..." class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
@@ -359,7 +434,7 @@
                             <input type="date" v-model="formTask.date" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
                         </div>
                         <div>
-                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">主業務分類</label>
+                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">主業務類別</label>
                             <select v-model="formTask.category" @change="onCategoryChange()" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium">
                                 <option value="行政業務">行政業務</option>
                                 <option value="人事業務">人事業務</option>
@@ -385,14 +460,52 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">當前進度</label>
-                        <select v-model="formTask.status" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                            <option value="未開始">未開始</option>
-                            <option value="進行中">進行中</option>
-                            <option value="已完成">已完成</option>
-                            <option value="暫緩">暫緩</option>
-                        </select>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">當前進度</label>
+                            <select v-model="formTask.status" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                <option value="未開始">未開始</option>
+                                <option value="進行中">進行中</option>
+                                <option value="已完成">已完成</option>
+                                <option value="暫緩">暫緩</option>
+                            </select>
+                        </div>
+
+                        <!-- Approval Status Dropdown -->
+                        <div>
+                            <label class="block font-semibold text-purple-900 dark:text-purple-300 mb-1">主管簽核/確認需求</label>
+                            <select v-model="formTask.approvalStatus" class="w-full px-3 py-2 rounded-xl bg-purple-50/60 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-900 dark:text-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium">
+                                <option value="無">無須確認</option>
+                                <option value="需與組長確認">需與組長確認</option>
+                                <option value="需與主任確認">需與主任確認</option>
+                                <option value="已完成確認">已完成確認</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- EXPENSE SPECIAL FIELDS IN MODAL -->
+                    <div v-if="formTask.subCategory === '費用'" class="p-3 bg-blue-50/80 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800/80 space-y-3">
+                        <div class="font-bold text-blue-900 dark:text-blue-300 flex items-center space-x-1.5">
+                            <i class="fa-solid fa-receipt"></i>
+                            <span>費用核銷專屬資訊</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">送至會計室日期</label>
+                                <input type="date" v-model="formTask.accountingDate" class="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-stone-900 border border-blue-200 dark:border-stone-700 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">核銷狀態</label>
+                                <select v-model="formTask.expenseStatus" class="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-stone-900 border border-blue-200 dark:border-stone-700 focus:outline-none font-medium">
+                                    <option value="已開立">已開立</option>
+                                    <option value="會計確認">會計確認</option>
+                                    <option value="費用轉彙總">費用轉彙總</option>
+                                    <option value="出納">出納</option>
+                                    <option value="完成">完成</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     <div>
@@ -475,7 +588,7 @@
                     </label>
                     <label class="flex items-center space-x-2 text-stone-600 dark:text-stone-300 cursor-pointer">
                         <input type="checkbox" v-model="exportIncludeNotes" class="rounded text-amber-600 focus:ring-amber-500">
-                        <span>包含備註與執行細節</span>
+                        <span>包含備註、費用核銷細節與執行歷程</span>
                     </label>
                 </div>
 
@@ -536,8 +649,8 @@
                         <th class="py-2 px-3 font-semibold">日期</th>
                         <th class="py-2 px-3 font-semibold">業務分類 (細項)</th>
                         <th class="py-2 px-3 font-semibold">事項名稱</th>
-                        <th class="py-2 px-3 font-semibold">優先度</th>
-                        <th class="py-2 px-3 font-semibold">進度狀態</th>
+                        <th class="py-2 px-3 font-semibold">簽核需求</th>
+                        <th class="py-2 px-3 font-semibold">進度/費用關卡</th>
                         <th class="py-2 px-3 font-semibold">備註與執行歷程</th>
                     </tr>
                 </thead>
@@ -546,8 +659,13 @@
                         <td class="py-2 px-3 whitespace-nowrap">{{ t.date }}</td>
                         <td class="py-2 px-3 whitespace-nowrap font-medium">{{ t.category }} <span v-if="t.subCategory" class="text-stone-500">({{ t.subCategory }})</span></td>
                         <td class="py-2 px-3 font-medium">{{ t.title }}</td>
-                        <td class="py-2 px-3 whitespace-nowrap">{{ t.priority }}</td>
-                        <td class="py-2 px-3 whitespace-nowrap">{{ t.status }}</td>
+                        <td class="py-2 px-3 whitespace-nowrap">{{ t.approvalStatus && t.approvalStatus !== '無' ? t.approvalStatus : '-' }}</td>
+                        <td class="py-2 px-3 whitespace-nowrap">
+                            <div>{{ t.status }}</div>
+                            <div v-if="t.subCategory === '費用'" class="text-[10px] text-blue-700 font-semibold">
+                                送會計: {{ t.accountingDate || '未定' }} | 關卡: {{ t.expenseStatus || '已開立' }}
+                            </div>
+                        </td>
                         <td class="py-2 px-3">
                             <div>{{ t.notes || '-' }}</div>
                             <div v-if="t.history && t.history.length > 0" class="mt-1 pt-1 border-t border-stone-200 text-[10px] text-stone-600 space-y-0.5">
@@ -580,7 +698,7 @@
 
         createApp({
             setup() {
-                // Today String Helper YYYY-MM-DD
+                // Date Helpers
                 const getTodayStr = () => new Date().toISOString().split('T')[0];
                 const getNowFormatted = () => {
                     const d = new Date();
@@ -593,17 +711,30 @@
 
                 const todayStr = getTodayStr();
 
-                // State
-                const currentTab = ref('daily'); // 'daily' | 'all'
+                // Navigation State
+                const currentTab = ref('daily');
                 const selectedDate = ref(todayStr);
                 const searchQuery = ref('');
                 const filterCategory = ref('ALL');
                 const filterSubCategory = ref('ALL');
+                const filterPendingApproval = ref(false);
                 const toastMsg = ref('');
 
-                // Quick execution history tracking inputs
+                // Quick execution history tracking
                 const quickLogs = ref({});
                 const expandedHistory = ref({});
+
+                // Expense Workflow Steps Definitions
+                const expenseSteps = ['已開立', '會計確認', '費用轉彙總', '出納', '完成'];
+
+                // Check if an expense step is active/completed
+                const isExpenseStepActive = (currentStatus, step) => {
+                    const curStatus = currentStatus || '已開立';
+                    const curIndex = expenseSteps.indexOf(curStatus);
+                    const stepIndex = expenseSteps.indexOf(step);
+                    if (curIndex === -1 || stepIndex === -1) return false;
+                    return stepIndex <= curIndex;
+                };
 
                 // Custom Business Taxonomy definitions
                 const mainCategories = ref(['ALL', '行政業務', '人事業務', 'QMS']);
@@ -613,13 +744,14 @@
                     'QMS': ['日常稽核', '文件管制', '矯正預防', '其他']
                 };
 
-                // Defined Preset Routine Tasks
+                // Defined Preset Routine Templates
                 const dailyRoutineTemplates = [
                     {
                         title: '每日線上填寫單位設施檢核表',
                         category: '行政業務',
                         subCategory: '一般庶務',
                         priority: '高',
+                        approvalStatus: '無',
                         notes: '線上系統網址: https://his.cmuh.org.tw/webapp/app/'
                     },
                     {
@@ -627,6 +759,7 @@
                         category: '行政業務',
                         subCategory: '一般庶務',
                         priority: '高',
+                        approvalStatus: '無',
                         notes: '務必每日完成，備查用。'
                     }
                 ];
@@ -637,6 +770,7 @@
                         category: '行政業務',
                         subCategory: '一般庶務',
                         priority: '中',
+                        approvalStatus: '無',
                         notes: '線上系統網址: https://his.cmuh.org.tw/webapp/app/'
                     },
                     {
@@ -644,6 +778,7 @@
                         category: '行政業務',
                         subCategory: '一般庶務',
                         priority: '中',
+                        approvalStatus: '無',
                         notes: '請至各樓層核對實體滅火器並填卡。'
                     },
                     {
@@ -651,6 +786,7 @@
                         category: '行政業務',
                         subCategory: '一般庶務',
                         priority: '高',
+                        approvalStatus: '需與組長確認',
                         notes: '⚠️ 職安查核重點項目！用印完成後各單位自行留存備查。'
                     },
                     {
@@ -658,14 +794,144 @@
                         category: 'QMS',
                         subCategory: '文件管制',
                         priority: '中',
+                        approvalStatus: '無',
                         notes: '定期完成個資稽核表單上傳程序。'
                     }
                 ];
 
-                // Tasks Local Storage Data
+                // Tasks Data
                 const tasks = ref([]);
 
-                // Task Modal Form State
+                // LocalStorage Management
+                const STORAGE_KEY = 'yuan_todo_tasks_v2';
+
+                const saveTasks = () => {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks.value));
+                };
+
+                const loadTasks = () => {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    if (saved) {
+                        try {
+                            tasks.value = JSON.parse(saved);
+                        } catch (e) {
+                            console.error(e);
+                            initDefaultTasks();
+                        }
+                    } else {
+                        initDefaultTasks();
+                    }
+                };
+
+                const initDefaultTasks = () => {
+                    tasks.value = [
+                        {
+                            id: '1',
+                            title: '每日線上填寫單位設施檢核表',
+                            date: todayStr,
+                            category: '行政業務',
+                            subCategory: '一般庶務',
+                            priority: '高',
+                            status: '進行中',
+                            approvalStatus: '無',
+                            accountingDate: '',
+                            expenseStatus: '已開立',
+                            notes: '線上系統網址: https://his.cmuh.org.tw/webapp/app/',
+                            history: [
+                                { id: '101', timestamp: getNowFormatted(), content: '系統預載例行事項' }
+                            ]
+                        },
+                        {
+                            id: '2',
+                            title: '8月份計程車費與出差費用核銷單提交',
+                            date: todayStr,
+                            category: '行政業務',
+                            subCategory: '費用',
+                            priority: '高',
+                            status: '進行中',
+                            approvalStatus: '需與組長確認',
+                            accountingDate: todayStr,
+                            expenseStatus: '會計確認',
+                            notes: '單據已整理齊全，待組長核章後送出。',
+                            history: [
+                                { id: '201', timestamp: getNowFormatted(), content: '已填寫核銷單並黏貼憑證' }
+                            ]
+                        }
+                    ];
+                    saveTasks();
+                };
+
+                // Daily Stats
+                const dailyStats = computed(() => {
+                    const dayTasks = tasks.value.filter(t => t.date === selectedDate.value);
+                    const total = dayTasks.length;
+                    const completed = dayTasks.filter(t => t.status === '已完成').length;
+                    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+                    return { total, completed, percent };
+                });
+
+                // Count of items pending supervisor approval
+                const pendingApprovalCount = computed(() => {
+                    return tasks.value.filter(t => {
+                        if (currentTab.value === 'daily' && t.date !== selectedDate.value) return false;
+                        return t.approvalStatus === '需與組長確認' || t.approvalStatus === '需與主任確認';
+                    }).length;
+                });
+
+                const togglePendingApprovalFilter = () => {
+                    filterPendingApproval.value = !filterPendingApproval.value;
+                    if (filterPendingApproval.value) {
+                        filterCategory.value = 'ALL';
+                        filterSubCategory.value = 'ALL';
+                        showToast('已開啟「待長官確認」快速彙報視圖');
+                    }
+                };
+
+                const quickConfirmApproval = (task) => {
+                    task.approvalStatus = '已完成確認';
+                    if (!task.history) task.history = [];
+                    task.history.push({
+                        id: Date.now().toString(),
+                        timestamp: getNowFormatted(),
+                        content: '完成長官確認步驟。'
+                    });
+                    saveTasks();
+                    showToast('已更新為：已完成確認');
+                };
+
+                const selectMainCategory = (cat) => {
+                    filterCategory.value = cat;
+                    filterSubCategory.value = 'ALL';
+                    filterPendingApproval.value = false;
+                };
+
+                const filteredTasks = computed(() => {
+                    return tasks.value.filter(t => {
+                        if (currentTab.value === 'daily' && t.date !== selectedDate.value) return false;
+                        
+                        // If pending approval filter active
+                        if (filterPendingApproval.value) {
+                            if (t.approvalStatus !== '需與組長確認' && t.approvalStatus !== '需與主任確認') return false;
+                        }
+
+                        if (filterCategory.value !== 'ALL' && t.category !== filterCategory.value) return false;
+                        if (filterSubCategory.value !== 'ALL' && t.subCategory !== filterSubCategory.value) return false;
+                        if (searchQuery.value.trim()) {
+                            const q = searchQuery.value.toLowerCase();
+                            const matchTitle = t.title.toLowerCase().includes(q);
+                            const matchNotes = (t.notes || '').toLowerCase().includes(q);
+                            const matchSub = (t.subCategory || '').toLowerCase().includes(q);
+                            const matchAppr = (t.approvalStatus || '').toLowerCase().includes(q);
+                            const matchExp = (t.expenseStatus || '').toLowerCase().includes(q);
+                            const matchAcc = (t.accountingDate || '').toLowerCase().includes(q);
+                            const matchHistory = (t.history || []).some(h => h.content.toLowerCase().includes(q));
+                            if (!matchTitle && !matchNotes && !matchSub && !matchAppr && !matchExp && !matchAcc && !matchHistory) return false;
+                        }
+                        return true;
+                    }).sort((a, b) => (a.priority === '高' ? -1 : 1));
+                });
+
+                // Task Modals & Forms
                 const showTaskModal = ref(false);
                 const editingTaskId = ref(null);
                 const formTask = ref({
@@ -675,217 +941,26 @@
                     subCategory: '一般庶務',
                     priority: '中',
                     status: '未開始',
+                    approvalStatus: '無',
+                    accountingDate: '',
+                    expenseStatus: '已開立',
                     notes: '',
                     history: []
                 });
 
-                // Export Modal State
-                const showExportModal = ref(false);
-                const exportStartDate = ref(todayStr);
-                const exportEndDate = ref(todayStr);
-                const exportOnlyCompleted = ref(false);
-                const exportIncludeNotes = ref(true);
-                const aiSummaryText = ref('');
-                const isGeneratingAI = ref(false);
-
-                // Daily Stats Computed
-                const dailyStats = computed(() => {
-                    const dayTasks = tasks.value.filter(t => t.date === selectedDate.value);
-                    const total = dayTasks.length;
-                    const completed = dayTasks.filter(t => t.status === '已完成').length;
-                    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-                    return { total, completed, percent };
-                });
-
-                // Export Filtered Tasks Computed
-                const exportTasksMatch = computed(() => {
-                    return tasks.value.filter(t => {
-                        if (t.date < exportStartDate.value || t.date > exportEndDate.value) return false;
-                        if (exportOnlyCompleted.value && t.status !== '已完成') return false;
-                        return true;
-                    }).sort((a, b) => a.date.localeCompare(b.date));
-                });
-
-                // Convert URLs in string to clickable anchors
-                const renderNotesWithLinks = (text) => {
-                    if (!text) return '';
-                    const urlPattern = /(https?:\/\/[^\s]+)/g;
-                    return text.replace(urlPattern, (url) => {
-                        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="note-link"><i class="fa-solid fa-arrow-up-right-from-square text-[10px] mr-1"></i>${url}</a>`;
-                    });
-                };
-
-                // Load Initial / Local Data
-                const loadTasks = () => {
-                    const saved = localStorage.getItem('tasklog_tasks');
-                    if (saved) {
-                        try {
-                            tasks.value = JSON.parse(saved);
-                            tasks.value.forEach(t => {
-                                if (!t.history) t.history = [];
-                            });
-                        } catch(e) {
-                            tasks.value = [];
-                        }
-                    } else {
-                        // Seed initial mock data including the user's daily/monthly routines
-                        const seedDaily = dailyRoutineTemplates.map((item, idx) => ({
-                            id: 'seed_d_' + idx,
-                            title: item.title,
-                            date: todayStr,
-                            category: item.category,
-                            subCategory: item.subCategory,
-                            priority: item.priority,
-                            status: '未開始',
-                            notes: item.notes,
-                            history: []
-                        }));
-
-                        const seedMonthly = monthlyRoutineTemplates.map((item, idx) => ({
-                            id: 'seed_m_' + idx,
-                            title: item.title,
-                            date: todayStr,
-                            category: item.category,
-                            subCategory: item.subCategory,
-                            priority: item.priority,
-                            status: '未開始',
-                            notes: item.notes,
-                            history: []
-                        }));
-
-                        tasks.value = [...seedDaily, ...seedMonthly];
-                        saveTasks();
-                    }
-
-                    // Default expand history for all tasks
-                    tasks.value.forEach(t => {
-                        expandedHistory.value[t.id] = true;
-                    });
-                };
-
-                // Import Routine Tasks dynamically for the current selected date
-                const importRoutineTasks = (type) => {
-                    const templates = type === 'daily' ? dailyRoutineTemplates : monthlyRoutineTemplates;
-                    let addedCount = 0;
-
-                    templates.forEach((tmpl, i) => {
-                        // Check if task with same title already exists on selectedDate
-                        const exists = tasks.value.some(t => t.date === selectedDate.value && t.title === tmpl.title);
-                        if (!exists) {
-                            const newId = Date.now().toString() + '_' + i;
-                            tasks.value.unshift({
-                                id: newId,
-                                title: tmpl.title,
-                                date: selectedDate.value,
-                                category: tmpl.category,
-                                subCategory: tmpl.subCategory,
-                                priority: tmpl.priority,
-                                status: '未開始',
-                                notes: tmpl.notes,
-                                history: [
-                                    { id: 'h_' + Date.now(), timestamp: getNowFormatted(), content: '由系統例行公事一鍵帶入。' }
-                                ]
-                            });
-                            expandedHistory.value[newId] = true;
-                            addedCount++;
-                        }
-                    });
-
-                    saveTasks();
-                    if (addedCount > 0) {
-                        showToast(`已成功載入 ${addedCount} 項${type === 'daily' ? '每日' : '每月'}例行公事！`);
-                    } else {
-                        showToast(`該日期的${type === 'daily' ? '每日' : '每月'}例行事項均已存在。`);
-                    }
-                };
-
-                const toggleTaskHistory = (taskId) => {
-                    expandedHistory.value[taskId] = !expandedHistory.value[taskId];
-                };
-
-                const addQuickLog = (task) => {
-                    const text = (quickLogs.value[task.id] || '').trim();
-                    if (!text) return;
-
-                    if (!task.history) task.history = [];
-                    task.history.push({
-                        id: Date.now().toString(),
-                        timestamp: getNowFormatted(),
-                        content: text
-                    });
-
-                    quickLogs.value[task.id] = '';
-                    saveTasks();
-                    showToast('已新增執行歷程紀錄');
-                };
-
-                const deleteHistoryLog = (task, logId) => {
-                    if (task.history) {
-                        task.history = task.history.filter(h => h.id !== logId);
-                        saveTasks();
-                        showToast('已刪除該筆歷程');
-                    }
-                };
-
-                const deleteModalHistoryLog = (logId) => {
-                    if (formTask.value.history) {
-                        formTask.value.history = formTask.value.history.filter(h => h.id !== logId);
-                    }
-                };
-
-                const saveTasks = () => {
-                    localStorage.setItem('tasklog_tasks', JSON.stringify(tasks.value));
-                };
-
-                const selectMainCategory = (cat) => {
-                    filterCategory.value = cat;
-                    filterSubCategory.value = 'ALL';
-                };
-
                 const onCategoryChange = () => {
-                    const subs = subCategoryOptions[formTask.value.category];
-                    if (subs && subs.length > 0) {
-                        formTask.value.subCategory = subs[0];
-                    } else {
-                        formTask.value.subCategory = '';
-                    }
+                    const subs = subCategoryOptions[formTask.value.category] || [];
+                    formTask.value.subCategory = subs[0] || '';
                 };
 
-                // Date Controls
-                const changeDate = (days) => {
-                    const d = new Date(selectedDate.value);
-                    d.setDate(d.getDate() + days);
-                    selectedDate.value = d.toISOString().split('T')[0];
-                };
-
-                const setToday = () => {
-                    selectedDate.value = todayStr;
-                };
-
-                // Filtered Tasks for main view
-                const filteredTasks = computed(() => {
-                    return tasks.value.filter(t => {
-                        if (currentTab.value === 'daily' && t.date !== selectedDate.value) return false;
-                        if (filterCategory.value !== 'ALL' && t.category !== filterCategory.value) return false;
-                        if (filterSubCategory.value !== 'ALL' && t.subCategory !== filterSubCategory.value) return false;
-                        if (searchQuery.value.trim()) {
-                            const q = searchQuery.value.toLowerCase();
-                            const matchTitle = t.title.toLowerCase().includes(q);
-                            const matchNotes = (t.notes || '').toLowerCase().includes(q);
-                            const matchSub = (t.subCategory || '').toLowerCase().includes(q);
-                            const matchHistory = (t.history || []).some(h => h.content.toLowerCase().includes(q));
-                            if (!matchTitle && !matchNotes && !matchSub && !matchHistory) return false;
-                        }
-                        return true;
-                    }).sort((a, b) => (a.priority === '高' ? -1 : 1));
-                });
-
-                // Task Actions
                 const openTaskModal = (task = null) => {
                     if (task) {
                         editingTaskId.value = task.id;
                         formTask.value = JSON.parse(JSON.stringify(task));
                         if (!formTask.value.history) formTask.value.history = [];
+                        if (!formTask.value.approvalStatus) formTask.value.approvalStatus = '無';
+                        if (!formTask.value.expenseStatus) formTask.value.expenseStatus = '已開立';
+                        if (!formTask.value.accountingDate) formTask.value.accountingDate = '';
                     } else {
                         editingTaskId.value = null;
                         const defaultMain = filterCategory.value !== 'ALL' ? filterCategory.value : '行政業務';
@@ -897,6 +972,9 @@
                             subCategory: defaultSub,
                             priority: '中',
                             status: '未開始',
+                            approvalStatus: '無',
+                            accountingDate: '',
+                            expenseStatus: '已開立',
                             notes: '',
                             history: []
                         };
@@ -950,11 +1028,112 @@
                     showToast('已刪除待辦事項');
                 };
 
+                const changeDate = (days) => {
+                    const d = new Date(selectedDate.value);
+                    d.setDate(d.getDate() + days);
+                    selectedDate.value = d.toISOString().split('T')[0];
+                };
+
+                const setToday = () => {
+                    selectedDate.value = todayStr;
+                };
+
                 const getPriorityClass = (priority) => {
                     if (priority === '高') return 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800';
                     if (priority === '中') return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800';
                     return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800';
                 };
+
+                const toggleTaskHistory = (taskId) => {
+                    expandedHistory.value[taskId] = !expandedHistory.value[taskId];
+                };
+
+                const addQuickLog = (task) => {
+                    const text = (quickLogs.value[task.id] || '').trim();
+                    if (!text) return;
+                    if (!task.history) task.history = [];
+                    task.history.unshift({
+                        id: Date.now().toString(),
+                        timestamp: getNowFormatted(),
+                        content: text
+                    });
+                    quickLogs.value[task.id] = '';
+                    saveTasks();
+                    showToast('已追加執行歷程');
+                };
+
+                const deleteHistoryLog = (task, logId) => {
+                    if (task.history) {
+                        task.history = task.history.filter(h => h.id !== logId);
+                        saveTasks();
+                        showToast('已刪除該筆歷程');
+                    }
+                };
+
+                const deleteModalHistoryLog = (logId) => {
+                    if (formTask.value.history) {
+                        formTask.value.history = formTask.value.history.filter(h => h.id !== logId);
+                    }
+                };
+
+                const importRoutineTasks = (type) => {
+                    const listToImport = type === 'daily' ? dailyRoutineTemplates : monthlyRoutineTemplates;
+                    let addedCount = 0;
+                    listToImport.forEach(tmpl => {
+                        const exists = tasks.value.some(t => t.date === selectedDate.value && t.title === tmpl.title);
+                        if (!exists) {
+                            const newId = Date.now().toString() + Math.random().toString(36).substr(2, 4);
+                            tasks.value.unshift({
+                                id: newId,
+                                title: tmpl.title,
+                                date: selectedDate.value,
+                                category: tmpl.category,
+                                subCategory: tmpl.subCategory,
+                                priority: tmpl.priority,
+                                status: '未開始',
+                                approvalStatus: tmpl.approvalStatus || '無',
+                                accountingDate: '',
+                                expenseStatus: '已開立',
+                                notes: tmpl.notes || '',
+                                history: [
+                                    {
+                                        id: Date.now().toString(),
+                                        timestamp: getNowFormatted(),
+                                        content: '帶入例行公事項目'
+                                    }
+                                ]
+                            });
+                            addedCount++;
+                        }
+                    });
+                    saveTasks();
+                    showToast(`已成功帶入 ${addedCount} 項例行公事`);
+                };
+
+                const renderNotesWithLinks = (text) => {
+                    if (!text) return '';
+                    const urlRegex = /(https?:\/\/[^\s]+)/g;
+                    return text.replace(urlRegex, (url) => {
+                        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="note-link">${url} <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>`;
+                    });
+                };
+
+                // Export Modal State & Logic
+                const showExportModal = ref(false);
+                const exportStartDate = ref(todayStr);
+                const exportEndDate = ref(todayStr);
+                const exportOnlyCompleted = ref(false);
+                const exportIncludeNotes = ref(true);
+                const aiSummaryText = ref('');
+                const isGeneratingAI = ref(false);
+
+                const exportTasksMatch = computed(() => {
+                    return tasks.value.filter(t => {
+                        if (t.date < exportStartDate.value || t.date > exportEndDate.value) return false;
+                        if (exportOnlyCompleted.value && t.status !== '已完成') return false;
+                        return true;
+                    }).sort((a, b) => a.date.localeCompare(b.date));
+                });
 
                 const openExportModal = () => {
                     exportStartDate.value = selectedDate.value;
@@ -996,6 +1175,12 @@
                     try {
                         const itemsFormatted = exportTasksMatch.value.map(t => {
                             let itemStr = `- [${t.date}][${t.category}${t.subCategory ? ' - ' + t.subCategory : ''}][狀態:${t.status}] ${t.title}`;
+                            if (t.approvalStatus && t.approvalStatus !== '無') {
+                                itemStr += ` [簽核需求: ${t.approvalStatus}]`;
+                            }
+                            if (t.subCategory === '費用') {
+                                itemStr += ` [費用核銷: 送會計日 ${t.accountingDate || '未定'}, 進度: ${t.expenseStatus || '已開立'}]`;
+                            }
                             if (t.notes) itemStr += ` (備註: ${t.notes})`;
                             if (t.history && t.history.length > 0) {
                                 const histStr = t.history.map(h => `[${h.timestamp}] ${h.content}`).join('; ');
@@ -1004,9 +1189,9 @@
                             return itemStr;
                         }).join('\n');
 
-                        const userPrompt = `請協助整理以下工作日誌，包含各事項與詳細執行歷程，並產出一份簡短、條理清晰且適合回報給主管的「工作重點摘要與成果總結」（約 150 - 200 字，繁體中文）：\n\n${itemsFormatted}`;
+                        const userPrompt = `請協助整理以下工作日誌，包含簽核狀態、費用核銷進度與詳細執行歷程，並產出一份簡短、條理清晰且適合回報給主管的「工作重點摘要與成果總結」（約 150 - 200 字，繁體中文）：\n\n${itemsFormatted}`;
 
-                        const apiKey = ""; // Runtime automatically injected if empty
+                        const apiKey = "";
                         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
                         const response = await fetch(apiUrl, {
@@ -1037,16 +1222,19 @@
 
                 // CSV Export
                 const exportCSV = () => {
-                    let csv = '\uFEFF'; // UTF-8 BOM
-                    csv += '日期,主分類,細項分類,事項名稱,優先等級,進度狀態,備註與細節,執行歷程細節\n';
+                    let csv = '\uFEFF';
+                    csv += '日期,主分類,細項分類,事項名稱,優先等級,主管簽核需求,進度狀態,送會計室日期,費用核銷進度,備註與細節,執行歷程細節\n';
 
                     exportTasksMatch.value.forEach(t => {
                         const cleanTitle = `"${(t.title || '').replace(/"/g, '""')}"`;
                         const cleanNotes = `"${(t.notes || '').replace(/"/g, '""')}"`;
                         const historyFormatted = (t.history || []).map(h => `[${h.timestamp}] ${h.content}`).join(' | ');
                         const cleanHistory = `"${historyFormatted.replace(/"/g, '""')}"`;
+                        const approval = t.approvalStatus || '無';
+                        const accDate = t.accountingDate || '';
+                        const expStatus = t.subCategory === '費用' ? (t.expenseStatus || '已開立') : '';
                         
-                        csv += `${t.date},${t.category},${t.subCategory || ''},${cleanTitle},${t.priority},${t.status},${cleanNotes},${cleanHistory}\n`;
+                        csv += `${t.date},${t.category},${t.subCategory || ''},${cleanTitle},${t.priority},${approval},${t.status},${accDate},${expStatus},${cleanNotes},${cleanHistory}\n`;
                     });
 
                     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -1072,7 +1260,12 @@
                     exportTasksMatch.value.forEach(t => {
                         const icon = t.status === '已完成' ? '✅' : '⏳';
                         const subStr = t.subCategory ? ` · ${t.subCategory}` : '';
-                        md += `- ${icon} **[${t.category}${subStr}]** ${t.title} (${t.priority}優先 | ${t.status})\n`;
+                        const apprStr = t.approvalStatus && t.approvalStatus !== '無' ? ` | 👥 ${t.approvalStatus}` : '';
+                        md += `- ${icon} **[${t.category}${subStr}]** ${t.title} (${t.priority}優先 | ${t.status}${apprStr})\n`;
+                        
+                        if (t.subCategory === '費用') {
+                            md += `  > 🧾 費用核銷: 送會計日 ${t.accountingDate || '未定'} | 關卡: ${t.expenseStatus || '已開立'}\n`;
+                        }
                         if (exportIncludeNotes.value && t.notes) {
                             md += `  > 備註: ${t.notes}\n`;
                         }
@@ -1111,8 +1304,14 @@
                     searchQuery,
                     filterCategory,
                     filterSubCategory,
+                    filterPendingApproval,
+                    pendingApprovalCount,
+                    togglePendingApprovalFilter,
+                    quickConfirmApproval,
                     mainCategories,
                     subCategoryOptions,
+                    expenseSteps,
+                    isExpenseStepActive,
                     selectMainCategory,
                     onCategoryChange,
                     tasks,
