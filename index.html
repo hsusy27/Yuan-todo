@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>yuan 代辦事項 - 智慧工作待辦與日誌匯出系統</title>
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -19,565 +20,714 @@
                             text: '#4A4238',
                             muted: '#9E9488',
                             primary: '#E07A5F',
+                            primaryHover: '#D0694E',
                             primarySoft: '#FDF0ED',
                             accent: '#81B29A',
-                            accentSoft: '#F2F7F4'
+                            accentHover: '#6F9F88',
+                            accentSoft: '#F2F7F4',
+                            warmYellow: '#F4F1DE',
+                            warmYellowDark: '#E0AC00',
+                            lavender: '#9D81BA',
+                            lavenderSoft: '#F5F2F9'
                         }
+                    },
+                    borderRadius: {
+                        '4xl': '2rem'
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 30px -5px rgba(74, 66, 56, 0.05)',
+                        'soft-lg': '0 20px 40px -10px rgba(74, 66, 56, 0.08)'
                     }
                 }
             }
         }
     </script>
+    
     <!-- Vue 3 CDN -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- FontAwesome Icons CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Inter & Noto Sans TC -->
+    <!-- Google Fonts Inter & Noto Sans TC -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Noto Sans TC', 'Inter', system-ui, -apple-system, sans-serif; }
+        body { 
+            font-family: 'Noto Sans TC', 'Inter', system-ui, -apple-system, sans-serif; 
+            background-color: #FAF8F5;
+            color: #4A4238;
+        }
+        [v-cloak] { display: none !important; }
+        
+        .bg-korean-soft { background-color: #FDF0ED; }
+        .border-korean-soft { border-color: #F8DCD4; }
+        
+        /* Custom smooth scrollbar styling */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #F0EAE1;
+            border-radius: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #D8CEBE;
+            border-radius: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #9E9488;
+        }
+
+        /* Auto link styling */
+        .note-link { color: #E07A5F; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+        .note-link:hover { color: #D0694E; }
+
         /* Print Styles for clean Work Log Exports */
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             body { background: white !important; color: black !important; }
-            .print-card { border: 1px solid #e5e7eb !important; box-shadow: none !important; }
+            .print-card { border: 1px solid #E0E0E0 !important; box-shadow: none !important; }
         }
         .print-only { display: none; }
-        
-        /* Auto link styling */
-        .note-link { color: #d97706; font-weight: 500; text-decoration: underline; text-underline-offset: 2px; }
-        .note-link:hover { color: #b45309; }
     </style>
 </head>
-<body class="bg-[#FAF8F5] dark:bg-stone-900 text-stone-700 dark:text-stone-200 min-h-screen flex flex-col transition-colors duration-200">
+<body class="min-h-screen antialiased selection:bg-[#E07A5F]/20 selection:text-[#E07A5F] flex flex-col">
 
-    <div id="app" class="flex-grow flex flex-col">
-        
-        <!-- ================= Security Lock Overlay ================= -->
-        <div v-if="isLocked" class="fixed inset-0 bg-[#FAF8F5] dark:bg-stone-900 z-50 flex items-center justify-center p-4">
-            <div class="max-w-md w-full bg-white dark:bg-stone-800 rounded-3xl p-8 shadow-xl border border-amber-100 dark:border-stone-700 text-center space-y-6">
-                <!-- Cute Cat Header Icon -->
-                <div class="w-20 h-20 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300 rounded-3xl flex items-center justify-center mx-auto shadow-inner text-3xl">
+    <div id="app" v-cloak class="min-h-screen flex flex-col flex-grow">
+
+        <!-- ================= SECURITY LOCK SCREEN ================= -->
+        <div v-if="isLocked" class="fixed inset-0 z-50 flex items-center justify-center bg-[#4A4238]/60 backdrop-blur-md p-4">
+            <div class="bg-white rounded-3xl shadow-soft-lg p-8 max-w-md w-full border border-[#F0EAE1] text-center space-y-6 animate-fade-in">
+                <div class="w-20 h-20 bg-[#FDF0ED] text-[#E07A5F] rounded-3xl flex items-center justify-center mx-auto shadow-inner text-3xl">
                     <i class="fa-solid fa-cat"></i>
                 </div>
-
                 <div>
-                    <h2 class="text-xl font-bold text-stone-800 dark:text-stone-100">yuan 代辦事項系統</h2>
-                    <p class="text-xs text-stone-400 dark:text-stone-400 mt-1">請輸入存取密碼以進行驗證</p>
+                    <h2 class="text-2xl font-bold text-[#4A4238]">yuan 代辦事項系統</h2>
+                    <p class="text-xs text-[#9E9488] mt-1">請輸入安全密碼以存取您的工作日誌與經費對帳</p>
                 </div>
-
-                <!-- Password Input Form -->
-                <div class="space-y-3">
+                <form @submit.prevent="verifyPassword" class="space-y-4">
                     <div class="relative">
-                        <input :type="showPassword ? 'text' : 'password'" 
-                               v-model="inputPassword" 
-                               @keyup.enter="verifyPassword()"
-                               placeholder="請輸入存取密碼" 
-                               class="w-full text-center tracking-widest font-mono text-base px-4 py-3 rounded-2xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                        <button @click="showPassword = !showPassword" type="button" class="absolute right-4 top-3.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-sm">
+                        <input :type="showPassword ? 'text' : 'password'" v-model="inputPassword" placeholder="請輸入存取密碼" autofocus
+                            class="w-full px-4 py-3.5 rounded-2xl bg-[#FAF8F5] border border-[#F0EAE1] focus:outline-none focus:ring-2 focus:ring-[#E07A5F] text-center text-lg tracking-widest font-mono text-[#4A4238]">
+                        <button @click="showPassword = !showPassword" type="button" class="absolute right-4 top-4 text-[#9E9488] hover:text-[#4A4238] text-sm transition">
                             <i :class="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
                         </button>
                     </div>
-
-                    <div v-if="lockErrorMsg" class="text-xs text-rose-500 font-medium flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
-                        <span>{{ lockErrorMsg }}</span>
+                    <div v-if="lockError" class="text-rose-500 text-xs font-medium animate-bounce flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> 密碼錯誤，請重新輸入 (預設 0527)
                     </div>
-
-                    <button @click="verifyPassword()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-2xl text-sm transition shadow-xs hover:shadow active:scale-95">
-                        驗證解鎖 🐾
+                    <button type="submit" class="w-full py-3.5 bg-[#E07A5F] hover:bg-[#D0694E] text-white font-bold rounded-2xl shadow-md shadow-[#E07A5F]/20 transition-all flex items-center justify-center space-x-2 active:scale-95">
+                        <span>驗證解鎖</span>
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
                     </button>
-                </div>
-
-                <div class="text-[11px] text-stone-400 pt-2 border-t border-stone-100 dark:border-stone-700/60">
-                    🔒 資料儲存於本機瀏覽器，安全防護無虞
+                </form>
+                <div class="text-[11px] text-[#9E9488] pt-3 border-t border-[#F0EAE1] flex items-center justify-center space-x-1">
+                    <i class="fa-solid fa-shield-halved text-[#81B29A]"></i>
+                    <span>資料儲存於本機瀏覽器，隱私安全無虞</span>
                 </div>
             </div>
         </div>
 
-        <!-- ================= Main Application Interface ================= -->
+        <!-- ================= MAIN APPLICATION UI ================= -->
         <template v-else>
-            <!-- Top Navigation Header -->
-            <header class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-md border-b border-amber-100/80 dark:border-stone-700 sticky top-0 z-30 no-print shadow-xs">
+            <header class="bg-white/90 backdrop-blur-md border-b border-[#F0EAE1] sticky top-0 z-30 no-print shadow-xs">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div class="flex items-center space-x-3">
-                        <!-- Cute Cat Logo -->
-                        <div class="w-10 h-10 rounded-2xl bg-amber-100/90 dark:bg-amber-900/40 border border-amber-200/60 dark:border-amber-700/50 flex items-center justify-center text-amber-600 dark:text-amber-300 shadow-xs transition-transform hover:scale-105">
-                            <i class="fa-solid fa-cat text-xl"></i>
+                        <div class="w-10 h-10 rounded-2xl bg-[#FDF0ED] text-[#E07A5F] flex items-center justify-center shadow-xs font-bold text-xl border border-[#F8DCD4]">
+                            🐱
                         </div>
                         <div>
-                            <h1 class="font-bold text-lg leading-none tracking-tight text-stone-800 dark:text-stone-100 flex items-center gap-1.5">
-                                yuan 代辦事項
-                                <span class="text-[10px] font-normal px-2 py-0.5 rounded-full bg-amber-100/80 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">🐾 Daily</span>
-                            </h1>
-                            <p class="text-xs text-stone-400 dark:text-stone-400 mt-0.5">清新工作待辦與日誌匯出</p>
+                            <div class="flex items-center space-x-2">
+                                <h1 class="text-lg font-bold text-[#4A4238] tracking-tight">yuan 代辦事項</h1>
+                                <span class="px-2 py-0.5 text-[11px] font-bold bg-[#FDF0ED] text-[#E07A5F] rounded-full border border-[#F8DCD4]">v3.0 Warm</span>
+                            </div>
+                            <p class="text-[11px] text-[#9E9488] hidden sm:block">智慧工作待辦與主任經費日誌管理系統</p>
                         </div>
                     </div>
 
                     <!-- Navigation Tabs & Actions -->
                     <div class="flex items-center space-x-2 sm:space-x-3">
-                        <nav class="flex space-x-1 bg-stone-100/80 dark:bg-stone-700/60 p-1 rounded-2xl">
-                            <button @click="currentTab = 'daily'" :class="currentTab === 'daily' ? 'bg-white dark:bg-stone-800 text-amber-700 dark:text-amber-300 shadow-xs font-semibold' : 'text-stone-500 dark:text-stone-300 hover:text-stone-800'" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-1.5">
+                        <nav class="flex space-x-1 bg-[#FAF8F5] p-1 rounded-2xl border border-[#F0EAE1]">
+                            <button @click="currentTab = 'daily'" :class="currentTab === 'daily' ? 'bg-white text-[#E07A5F] shadow-xs font-bold' : 'text-[#9E9488] hover:text-[#4A4238]'" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-1.5">
                                 <i class="fa-solid fa-calendar-day"></i>
                                 <span class="hidden sm:inline">日視圖</span>
                             </button>
-                            <button @click="currentTab = 'all'" :class="currentTab === 'all' ? 'bg-white dark:bg-stone-800 text-amber-700 dark:text-amber-300 shadow-xs font-semibold' : 'text-stone-500 dark:text-stone-300 hover:text-stone-800'" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-1.5">
+                            <button @click="currentTab = 'all'" :class="currentTab === 'all' ? 'bg-white text-[#E07A5F] shadow-xs font-bold' : 'text-[#9E9488] hover:text-[#4A4238]'" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-1.5">
                                 <i class="fa-solid fa-layer-group"></i>
                                 <span class="hidden sm:inline">全覽與搜尋</span>
                             </button>
-                            <button @click="openExportModal()" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 hover:bg-stone-200/50 dark:hover:bg-stone-700 transition-all flex items-center space-x-1.5">
-                                <i class="fa-solid fa-file-export text-emerald-500"></i>
-                                <span class="font-medium text-emerald-600 dark:text-emerald-400">匯出日誌</span>
+                            <button @click="currentTab = 'finance'" :class="currentTab === 'finance' ? 'bg-white text-[#E07A5F] shadow-xs font-bold' : 'text-[#9E9488] hover:text-[#4A4238]'" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm transition-all flex items-center space-x-1.5">
+                                <i class="fa-solid fa-calculator text-[#81B29A]"></i>
+                                <span class="hidden sm:inline">經費對帳</span>
                             </button>
                         </nav>
 
-                        <!-- Primary Action Buttons -->
-                        <button @click="openTaskModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs sm:text-sm px-3.5 py-2 rounded-2xl shadow-xs hover:shadow transition flex items-center space-x-1.5 active:scale-95">
+                        <button @click="openExportModal()" class="px-3 py-2 text-xs sm:text-sm font-semibold text-[#81B29A] bg-[#F2F7F4] hover:bg-[#E3EFEA] border border-[#C8E0D5] rounded-xl transition flex items-center space-x-1.5">
+                            <i class="fa-solid fa-file-export"></i>
+                            <span class="hidden md:inline">匯出日誌</span>
+                        </button>
+                        
+                        <button @click="openNewTaskModal()" class="px-3.5 py-2 text-xs sm:text-sm font-bold text-white bg-[#E07A5F] hover:bg-[#D0694E] rounded-xl shadow-xs transition flex items-center space-x-1.5 active:scale-95">
                             <i class="fa-solid fa-plus"></i>
                             <span class="hidden sm:inline">新增待辦</span>
                         </button>
 
-                        <!-- Lock Screen Button -->
-                        <button @click="lockSystem()" title="鎖定系統" class="p-2 text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-stone-700 rounded-xl transition text-sm">
+                        <button @click="lockApp" title="安全鎖定" class="p-2 text-[#9E9488] hover:text-[#4A4238] rounded-xl hover:bg-[#FAF8F5] transition">
                             <i class="fa-solid fa-lock"></i>
                         </button>
-                        
-                        <!-- Change Password Button -->
-                        <button @click="openChangePasswordModal()" title="修改密碼" class="p-2 text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-stone-700 rounded-xl transition text-sm">
+                        <button @click="showModal = 'changePassword'" title="修改密碼" class="p-2 text-[#9E9488] hover:text-[#4A4238] rounded-xl hover:bg-[#FAF8F5] transition">
                             <i class="fa-solid fa-key"></i>
                         </button>
                     </div>
                 </div>
             </header>
 
-            <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow no-print">
-                
-                <!-- Daily View Control Banner & Routine Quick Import -->
-                <div v-if="currentTab === 'daily'" class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-stone-800 p-4 sm:p-5 rounded-2xl border border-stone-200/70 dark:border-stone-700 shadow-xs">
-                    
-                    <div class="flex flex-wrap items-center gap-3">
-                        <div class="flex items-center space-x-2">
-                            <button @click="changeDate(-1)" class="w-8 h-8 flex items-center justify-center rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 transition">
-                                <i class="fa-solid fa-chevron-left text-xs text-stone-600 dark:text-stone-300"></i>
-                            </button>
-                            
-                            <div class="flex items-center space-x-2 bg-amber-50/50 dark:bg-stone-900/50 px-3 py-1.5 rounded-xl border border-amber-100/60 dark:border-stone-700">
-                                <i class="fa-regular fa-calendar text-amber-500 dark:text-amber-400 text-sm"></i>
-                                <input type="date" v-model="selectedDate" class="font-bold text-stone-800 dark:text-stone-100 text-sm sm:text-base bg-transparent border-none focus:ring-0 cursor-pointer p-0">
-                            </div>
+            <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 no-print">
 
-                            <button @click="changeDate(1)" class="w-8 h-8 flex items-center justify-center rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 transition">
-                                <i class="fa-solid fa-chevron-right text-xs text-stone-600 dark:text-stone-300"></i>
-                            </button>
-
-                            <button @click="setToday()" class="text-xs bg-amber-100/70 dark:bg-stone-700 text-amber-800 dark:text-amber-300 px-2.5 py-1.5 rounded-xl hover:bg-amber-200/70 transition font-medium border border-amber-200/50">
-                                今天
-                            </button>
+                <!-- CONTROLS, DATE SELECTOR & ROUTINE QUICK-IMPORTS -->
+                <div class="bg-white rounded-3xl shadow-soft border border-[#F0EAE1] p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center space-x-2 w-full sm:w-auto">
+                        <button @click="changeDate(-1)" class="p-2 text-[#9E9488] hover:bg-[#FAF8F5] hover:text-[#4A4238] rounded-xl transition">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <div class="relative flex-1 sm:flex-initial">
+                            <input type="date" v-model="selectedDate" class="px-3 py-2 border border-[#F0EAE1] rounded-xl font-bold text-[#4A4238] bg-[#FAF8F5] focus:outline-none focus:ring-2 focus:ring-[#E07A5F] text-xs sm:text-sm w-full">
                         </div>
-
-                        <!-- Quick Routine Tasks Import Button -->
-                        <div class="relative group">
-                            <button class="bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
-                                <i class="fa-solid fa-bolt text-emerald-500"></i>
-                                <span>帶入例行公事</span>
-                                <i class="fa-solid fa-chevron-down text-[10px] text-emerald-500"></i>
-                            </button>
-                            
-                            <!-- Dropdown Menu -->
-                            <div class="absolute left-0 mt-1 w-56 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl shadow-xl z-20 hidden group-hover:block p-1.5 space-y-1">
-                                <button @click="importRoutineTasks('daily')" class="w-full text-left px-3 py-2 rounded-xl text-xs text-stone-700 dark:text-stone-200 hover:bg-amber-50 dark:hover:bg-stone-700 flex items-center space-x-2 transition">
-                                    <i class="fa-solid fa-sun text-amber-500"></i>
-                                    <div>
-                                        <div class="font-semibold">帶入每日例行 (2項)</div>
-                                        <div class="text-[10px] text-stone-400">設施檢核、紙本日常火源</div>
-                                    </div>
-                                </button>
-                                <button @click="importRoutineTasks('monthly')" class="w-full text-left px-3 py-2 rounded-xl text-xs text-stone-700 dark:text-stone-200 hover:bg-amber-50 dark:hover:bg-stone-700 flex items-center space-x-2 transition">
-                                    <i class="fa-solid fa-calendar-check text-indigo-500"></i>
-                                    <div>
-                                        <div class="font-semibold">帶入每月例行 (4項)</div>
-                                        <div class="text-[10px] text-stone-400">自主檢查、滅火器、火源、個資</div>
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
+                        <button @click="changeDate(1)" class="p-2 text-[#9E9488] hover:bg-[#FAF8F5] hover:text-[#4A4238] rounded-xl transition">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                        <button @click="selectedDate = todayStr" class="px-3 py-2 text-xs font-bold bg-[#FDF0ED] hover:bg-[#F8DCD4] text-[#E07A5F] rounded-xl transition">
+                            今天
+                        </button>
                     </div>
 
-                    <!-- Daily Completion Progress Bar -->
-                    <div class="flex items-center space-x-3 bg-amber-50/40 dark:bg-stone-900/50 px-4 py-2 rounded-2xl border border-amber-100/60 dark:border-stone-700/50">
-                        <div class="text-xs text-stone-500">
-                            當日進度: <span class="font-bold text-stone-800 dark:text-stone-200">{{ dailyStats.total > 0 ? dailyStats.completed : 0 }}/{{ dailyStats.total }} 項 ({{ dailyStats.total > 0 ? dailyStats.percent : 0 }}%)</span>
+                    <!-- Routine Tasks Quick Import Dropdown -->
+                    <div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
+                        <div class="relative group">
+                            <button class="bg-[#F2F7F4] hover:bg-[#E3EFEA] text-[#81B29A] border border-[#C8E0D5] px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-2xs">
+                                <i class="fa-solid fa-bolt text-[#81B29A]"></i>
+                                <span>帶入例行公事</span>
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </button>
+                            
+                            <div class="absolute right-0 mt-1 w-64 bg-white border border-[#F0EAE1] rounded-2xl shadow-soft-lg z-20 hidden group-hover:block p-1.5 space-y-1">
+                                <button @click="importRoutineTasks('daily')" class="w-full text-left px-3 py-2 rounded-xl text-xs text-[#4A4238] hover:bg-[#FDF0ED] flex items-center space-x-2 transition">
+                                    <i class="fa-solid fa-sun text-[#E07A5F] text-base"></i>
+                                    <div>
+                                        <div class="font-bold">帶入每日例行 (2項)</div>
+                                        <div class="text-[10px] text-[#9E9488]">設施檢核、紙本日常火源</div>
+                                    </div>
+                                </button>
+                                <button @click="importRoutineTasks('monthly')" class="w-full text-left px-3 py-2 rounded-xl text-xs text-[#4A4238] hover:bg-[#F2F7F4] flex items-center space-x-2 transition">
+                                    <i class="fa-solid fa-calendar-check text-[#81B29A] text-base"></i>
+                                    <div>
+                                        <div class="font-bold">帶入每月例行 (4項)</div>
+                                        <div class="text-[10px] text-[#9E9488]">自主檢查、滅火器、火源、個資</div>
+                                    </div>
+                                </button>
+                            </div>
                         </div>
-                        <div class="w-28 sm:w-36 bg-amber-100/60 dark:bg-stone-700 rounded-full h-2.5 overflow-hidden">
-                            <div class="bg-gradient-to-r from-amber-400 to-emerald-400 h-2.5 rounded-full transition-all duration-300" :style="{ width: (dailyStats.total > 0 ? dailyStats.percent : 0) + '%' }"></div>
+
+                        <!-- Progress Bar (Daily View) -->
+                        <div v-if="currentTab === 'daily'" class="flex items-center space-x-2 bg-[#FAF8F5] px-3 py-1.5 rounded-xl border border-[#F0EAE1]">
+                            <span class="text-xs text-[#9E9488] font-medium">進度: <strong class="text-[#4A4238]">{{ dailyStats.completed }}/{{ dailyStats.total }}</strong></span>
+                            <div class="w-20 bg-[#F0EAE1] rounded-full h-2 overflow-hidden">
+                                <div class="bg-[#E07A5F] h-2 rounded-full transition-all duration-300" :style="{ width: dailyStats.percent + '%' }"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Category Filter Bar -->
-                <div class="mb-6 space-y-3">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-xs font-semibold text-stone-400 uppercase tracking-wider mr-1">主業務:</span>
-                        <button v-for="cat in mainCategories" :key="cat" @click="selectMainCategory(cat)" 
-                            :class="filterCategory === cat && !filterPendingApproval ? 'bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 font-semibold shadow-xs' : 'bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700 hover:bg-stone-100'" 
-                            class="px-3.5 py-1.5 rounded-xl text-xs transition">
-                            {{ cat === 'ALL' ? '全部' : cat }}
-                        </button>
+                <!-- CATEGORY & SEARCH FILTERS -->
+                <div class="space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-xs font-bold text-[#9E9488] uppercase tracking-wider mr-1">主業務:</span>
+                            <button v-for="cat in businessCategories" :key="cat" @click="selectMainCategory(cat)"
+                                :class="['px-3.5 py-1.5 rounded-xl text-xs font-bold transition', currentCategory === cat && !filterPendingApproval ? 'bg-[#4A4238] text-white shadow-xs' : 'bg-white text-[#4A4238] border border-[#F0EAE1] hover:bg-[#FAF8F5]']">
+                                {{ cat }}
+                            </button>
 
-                        <!-- Quick Filter Button for Pending Supervisor Confirmations -->
-                        <button @click="togglePendingApprovalFilter()" 
-                            :class="filterPendingApproval ? 'bg-purple-600 text-white font-bold shadow-xs' : 'bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100'" 
-                            class="px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-1.5 ml-auto sm:ml-2">
-                            <i class="fa-solid fa-user-check"></i>
-                            <span>待長官確認</span>
-                            <span v-if="pendingApprovalCount > 0" class="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-200 dark:bg-purple-800 text-purple-900 dark:text-purple-100 font-extrabold">
-                                {{ pendingApprovalCount }}
-                            </span>
-                        </button>
+                            <!-- Supervisor Approval Quick Filter Button -->
+                            <button @click="togglePendingApprovalFilter()"
+                                :class="['px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ml-1', filterPendingApproval ? 'bg-[#9D81BA] text-white shadow-xs' : 'bg-[#F5F2F9] text-[#9D81BA] border border-[#E4DCEE] hover:bg-[#EDE7F4]']">
+                                <i class="fa-solid fa-user-check"></i>
+                                <span>待長官確認</span>
+                                <span v-if="pendingApprovalCount > 0" class="px-1.5 py-0.2 rounded-full text-[10px] bg-white text-[#9D81BA] font-extrabold">
+                                    {{ pendingApprovalCount }}
+                                </span>
+                            </button>
+                        </div>
+
+                        <!-- SEARCH BOX -->
+                        <div class="relative w-full sm:w-72">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[#9E9488]"></i>
+                            <input type="text" v-model="searchQuery" placeholder="搜尋事項、會計代號、金額、傳票..."
+                                class="w-full pl-9 pr-4 py-2 bg-white rounded-2xl border border-[#F0EAE1] text-xs focus:outline-none focus:ring-2 focus:ring-[#E07A5F] text-[#4A4238]">
+                        </div>
                     </div>
 
-                    <!-- Sub-category filter pills when a main category is selected -->
-                    <div v-if="filterCategory !== 'ALL' && subCategoryOptions[filterCategory]" class="flex flex-wrap items-center gap-1.5 pl-3 border-l-2 border-amber-400 bg-amber-50/40 dark:bg-stone-800/50 p-2 rounded-r-2xl">
-                        <span class="text-xs font-medium text-stone-500 dark:text-stone-400 mr-1"><i class="fa-solid fa-filter text-[10px] mr-1"></i>細項:</span>
-                        <button @click="filterSubCategory = 'ALL'" 
-                            :class="filterSubCategory === 'ALL' ? 'bg-amber-500 text-white font-medium' : 'bg-white dark:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-600 hover:bg-stone-100'" 
-                            class="px-2.5 py-1 rounded-lg text-[11px] transition">
+                    <!-- Sub Category Pills -->
+                    <div v-if="currentCategory !== '全部' && subCategoryOptions[currentCategory]" class="flex flex-wrap items-center gap-1.5 pl-3 border-l-2 border-[#E07A5F] bg-[#FDF0ED]/50 p-2 rounded-r-2xl text-xs">
+                        <span class="font-medium text-[#9E9488] mr-1"><i class="fa-solid fa-filter text-[10px] mr-1"></i>細項:</span>
+                        <button @click="currentSubCategory = '全部細項'"
+                            :class="['px-2.5 py-1 rounded-lg text-[11px] font-bold transition', currentSubCategory === '全部細項' ? 'bg-[#E07A5F] text-white' : 'bg-white text-[#4A4238] border border-[#F0EAE1]']">
                             全部細項
                         </button>
-                        <button v-for="sub in subCategoryOptions[filterCategory]" :key="sub" @click="filterSubCategory = sub" 
-                            :class="filterSubCategory === sub ? 'bg-amber-500 text-white font-medium' : 'bg-white dark:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-600 hover:bg-stone-100'" 
-                            class="px-2.5 py-1 rounded-lg text-[11px] transition">
+                        <button v-for="sub in subCategoryOptions[currentCategory]" :key="sub" @click="currentSubCategory = sub"
+                            :class="['px-2.5 py-1 rounded-lg text-[11px] font-bold transition', currentSubCategory === sub ? 'bg-[#E07A5F] text-white' : 'bg-white text-[#4A4238] border border-[#F0EAE1]']">
                             {{ sub }}
                         </button>
                     </div>
-
-                    <div class="relative w-full sm:w-64 pt-1">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-4 text-xs text-stone-400"></i>
-                        <input type="text" v-model="searchQuery" placeholder="搜尋事項、核銷單、備註..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                    </div>
                 </div>
 
-                <!-- Empty State -->
-                <div v-if="filteredTasks.length === 0" class="text-center py-16 bg-white dark:bg-stone-800 rounded-2xl border border-dashed border-stone-300 dark:border-stone-700 my-4">
-                    <div class="w-16 h-16 bg-amber-50 dark:bg-stone-700 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <i class="fa-regular fa-clipboard text-2xl"></i>
-                    </div>
-                    <h3 class="text-base font-semibold text-stone-700 dark:text-stone-200">尚無相關待辦事項</h3>
-                    <p class="text-xs text-stone-400 mt-1">點擊上方「新增待辦」或「帶入例行公事」開始安排工作吧！</p>
-                    <div class="flex items-center justify-center gap-2 mt-4">
-                        <button @click="importRoutineTasks('daily')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium transition shadow-2xs">
-                            <i class="fa-solid fa-bolt mr-1"></i>帶入每日例行
-                        </button>
-                        <button @click="openTaskModal()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-medium transition shadow-2xs">
-                            + 建立客製事項
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Task List -->
-                <div v-else class="space-y-3">
-                    <div v-for="task in filteredTasks" :key="task.id" 
-                        :class="[
-                            'bg-white dark:bg-stone-800 rounded-2xl p-4 sm:p-5 border transition-all duration-200 shadow-xs hover:shadow-md flex flex-col md:flex-row md:items-start justify-between gap-4',
-                            task.status === '已完成' ? 'border-stone-200 dark:border-stone-700/60 bg-stone-50/50 dark:bg-stone-800/40 opacity-75' : 'border-stone-200/80 dark:border-stone-700'
-                        ]">
-                        
-                        <!-- Left Section: Status Checkbox & Details -->
-                        <div class="flex items-start space-x-3.5 flex-grow">
-                            <!-- Quick Complete Toggle -->
-                            <button @click="toggleComplete(task)" class="mt-0.5 text-xl flex-shrink-0 transition transform active:scale-95">
-                                <i v-if="task.status === '已完成'" class="fa-solid fa-circle-check text-emerald-500"></i>
-                                <i v-else-if="task.status === '進行中'" class="fa-solid fa-spinner text-amber-500 animate-spin"></i>
-                                <i v-else-if="task.status === '暫緩'" class="fa-solid fa-circle-pause text-stone-400"></i>
-                                <i v-else class="fa-regular fa-circle text-stone-300 hover:text-amber-500 dark:text-stone-600"></i>
+                <!-- ================= FINANCIAL 4x4 MATRIX MODULE ================= -->
+                <div v-if="currentTab === 'finance' || currentCategory === '經費管理'" class="space-y-6">
+                    
+                    <div class="bg-white rounded-3xl p-4 shadow-soft border border-[#F0EAE1] flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-bold text-[#9E9488] uppercase tracking-wider">經費細項:</span>
+                            <button v-for="sub in finSubCategories" :key="sub" @click="currentFinSubCategory = sub"
+                                :class="['px-3 py-1.5 rounded-xl text-xs font-bold transition', currentFinSubCategory === sub ? 'bg-[#E07A5F] text-white shadow-xs' : 'bg-[#FAF8F5] text-[#4A4238] hover:bg-[#F0EAE1]']">
+                                {{ sub }}
                             </button>
+                        </div>
 
-                            <div class="flex-grow min-w-0">
-                                <!-- Title and Tags -->
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <span :class="[
-                                        'font-semibold text-sm sm:text-base break-words',
-                                        task.status === '已完成' ? 'line-through text-stone-400 dark:text-stone-500' : 'text-stone-800 dark:text-stone-100'
-                                    ]">
-                                        {{ task.title }}
+                        <div class="flex items-center space-x-2">
+                            <div class="bg-[#FAF8F5] p-1 rounded-xl flex space-x-1 border border-[#F0EAE1]">
+                                <button @click="financialViewMode = 'monthly'" :class="['px-2.5 py-1 text-xs font-bold rounded-lg transition', financialViewMode === 'monthly' ? 'bg-white text-[#4A4238] shadow-xs' : 'text-[#9E9488]']">
+                                    當月對帳 ({{ currentMonthLabel }})
+                                </button>
+                                <button @click="financialViewMode = 'historical'" :class="['px-2.5 py-1 text-xs font-bold rounded-lg transition', financialViewMode === 'historical' ? 'bg-white text-[#4A4238] shadow-xs' : 'text-[#9E9488]']">
+                                    歷年總累計對帳
+                                </button>
+                            </div>
+
+                            <button @click="loadAicExcelSeedTasks" class="px-3 py-1.5 text-xs font-bold bg-[#F2F7F4] text-[#81B29A] hover:bg-[#E3EFEA] border border-[#C8E0D5] rounded-xl transition flex items-center space-x-1">
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>📥 載入 AIC 經費表全數明細</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 4x4 MATRIX RECONCILIATION TABLE -->
+                    <div class="bg-white rounded-3xl shadow-soft border border-[#F0EAE1] overflow-hidden">
+                        <div class="p-5 bg-[#4A4238] text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <h3 class="font-bold text-base">主任月費用 - 對帳結算矩陣表</h3>
+                                    <span class="px-2.5 py-0.5 text-xs font-bold bg-[#E07A5F] text-white rounded-full">
+                                        {{ financialViewMode === 'monthly' ? currentMonthLabel : '歷年全期總計' }}
                                     </span>
+                                </div>
+                                <p class="text-xs text-[#FAF8F5]/80 mt-0.5">跨單位四方歸屬 (醫院/中心/學校/外部) 支出與撥款自動試算</p>
+                            </div>
+                            <button @click="exportDirectorReport" class="px-3 py-1.5 text-xs font-bold bg-[#81B29A] hover:bg-[#6F9F88] text-white rounded-xl shadow-xs transition flex items-center space-x-1">
+                                <i class="fa-solid fa-copy"></i>
+                                <span>📄 複製主任專用對帳報表</span>
+                            </button>
+                        </div>
 
-                                    <!-- Approval Requirement Badge with Quick Action -->
-                                    <div v-if="task.approvalStatus && task.approvalStatus !== '無'" class="flex items-center gap-1">
-                                        <span :class="[
-                                            task.approvalStatus === '已完成確認' 
-                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-200' 
-                                                : 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border-purple-200',
-                                            'border text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1'
-                                        ]">
-                                            <i :class="task.approvalStatus === '已完成確認' ? 'fa-solid fa-circle-check' : 'fa-solid fa-user-clock'" class="text-[9px]"></i>
-                                            {{ task.approvalStatus }}
+                        <div class="p-4 overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-xs text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-[#FAF8F5] text-[#4A4238] font-bold border-b border-[#F0EAE1]">
+                                        <th class="p-3 text-[#9E9488]">項目指標</th>
+                                        <th class="p-3 text-center">醫院</th>
+                                        <th class="p-3 text-center">中心</th>
+                                        <th class="p-3 text-center">學校</th>
+                                        <th class="p-3 text-center">外部</th>
+                                        <th class="p-3 text-right font-extrabold text-[#4A4238] bg-[#FDF0ED]">合計</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[#F0EAE1] font-medium text-[#4A4238]">
+                                    <tr class="hover:bg-[#FAF8F5]">
+                                        <td class="p-3 font-bold">待給對方 (主任實際支應費用)</td>
+                                        <td class="p-3 text-center">{{ formatNumber(matrixData.pendingOther.醫院) }}</td>
+                                        <td class="p-3 text-center">{{ formatNumber(matrixData.pendingOther.中心) }}</td>
+                                        <td class="p-3 text-center">{{ formatNumber(matrixData.pendingOther.學校) }}</td>
+                                        <td class="p-3 text-center">{{ formatNumber(matrixData.pendingOther.外部) }}</td>
+                                        <td class="p-3 text-right font-bold bg-[#FDF0ED]/50">{{ formatNumber(matrixData.pendingOther.sum) }}</td>
+                                    </tr>
+                                    <tr class="hover:bg-[#FAF8F5] bg-[#FDF0ED]/30">
+                                        <td class="p-3 text-[#E07A5F] font-bold">主任沒開銷，另申請給中心</td>
+                                        <td class="p-3 text-center text-[#E07A5F]">{{ formatNumber(matrixData.directorNoExp.醫院) }}</td>
+                                        <td class="p-3 text-center text-[#E07A5F] font-bold">{{ formatNumber(matrixData.directorNoExp.中心) }}</td>
+                                        <td class="p-3 text-center text-[#E07A5F]">{{ formatNumber(matrixData.directorNoExp.學校) }}</td>
+                                        <td class="p-3 text-center text-[#E07A5F]">{{ formatNumber(matrixData.directorNoExp.外部) }}</td>
+                                        <td class="p-3 text-right font-extrabold text-[#E07A5F] bg-[#FDF0ED]">{{ formatNumber(matrixData.directorNoExp.sum) }}</td>
+                                    </tr>
+                                    <tr class="hover:bg-[#FAF8F5] bg-rose-50/40">
+                                        <td class="p-3 text-rose-700 font-bold">支出 (待給主任代墊款)</td>
+                                        <td class="p-3 text-center text-rose-600 font-semibold">{{ formatNumber(matrixData.expense.醫院) }}</td>
+                                        <td class="p-3 text-center text-rose-600">{{ formatNumber(matrixData.expense.中心) }}</td>
+                                        <td class="p-3 text-center text-rose-600 font-semibold">{{ formatNumber(matrixData.expense.學校) }}</td>
+                                        <td class="p-3 text-center text-rose-600">{{ formatNumber(matrixData.expense.外部) }}</td>
+                                        <td class="p-3 text-right font-extrabold text-rose-600 bg-rose-100/50">NT$ {{ formatNumber(matrixData.expense.sum) }}</td>
+                                    </tr>
+                                    <tr class="hover:bg-[#FAF8F5] bg-[#F2F7F4]/60">
+                                        <td class="p-3 text-[#81B29A] font-bold">當期收入 / 已核對入帳給主任</td>
+                                        <td class="p-3 text-center text-[#81B29A]">{{ formatNumber(matrixData.income.醫院) }}</td>
+                                        <td class="p-3 text-center text-[#81B29A]">{{ formatNumber(matrixData.income.中心) }}</td>
+                                        <td class="p-3 text-center text-[#81B29A] font-semibold">{{ formatNumber(matrixData.income.學校) }}</td>
+                                        <td class="p-3 text-center text-[#81B29A]">{{ formatNumber(matrixData.income.外部) }}</td>
+                                        <td class="p-3 text-right font-extrabold text-[#81B29A] bg-[#E3EFEA]">NT$ {{ formatNumber(matrixData.income.sum) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- BALANCE RECONCILIATION BAR -->
+                        <div class="px-5 py-3.5 bg-[#FAF8F5] border-t border-[#F0EAE1] flex flex-col sm:flex-row items-center justify-between text-xs gap-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-bold text-[#4A4238]">當前對帳總評價淨額:</span>
+                                <span :class="['font-extrabold text-sm', netBalance >= 0 ? 'text-[#81B29A]' : 'text-rose-600']">
+                                    NT$ {{ formatNumber(netBalance) }}
+                                </span>
+                                <span v-if="netBalance >= 0" class="px-2.5 py-0.5 bg-[#F2F7F4] text-[#81B29A] border border-[#C8E0D5] font-bold rounded-full text-[10px]">
+                                    ✅ 歷年代墊款已收支平衡/結清
+                                </span>
+                                <span v-else class="px-2.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200 font-bold rounded-full text-[10px]">
+                                    ⏳ 尚有主任代墊款待匯還
+                                </span>
+                            </div>
+                            <div class="text-[#9E9488] text-[11px]">
+                                *淨額 = 總撥款收入 - 總代墊支出
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= TASK CARDS & GROUPED LIST ================= -->
+                <div class="space-y-6">
+
+                    <!-- EMPTY STATE -->
+                    <div v-if="groupedFinancialTasks.length === 0" class="bg-white rounded-3xl p-12 text-center border border-dashed border-[#F0EAE1]">
+                        <div class="w-16 h-16 bg-[#FAF8F5] text-[#9E9488] rounded-full flex items-center justify-center mx-auto mb-3 text-2xl border border-[#F0EAE1]">
+                            <i class="fa-solid fa-folder-open"></i>
+                        </div>
+                        <h3 class="text-base font-bold text-[#4A4238] mb-1">尚無對應的待辦事項</h3>
+                        <p class="text-xs text-[#9E9488] mb-4">點擊下方按鈕可快速匯入 AIC 經費表範例數據或手動新增</p>
+                        <div class="flex items-center justify-center gap-2">
+                            <button @click="loadAicExcelSeedTasks" class="px-4 py-2 bg-[#E07A5F] text-white rounded-xl text-xs font-bold shadow-xs hover:bg-[#D0694E] transition">
+                                📥 載入 AIC 經費表 6月/7月明細
+                            </button>
+                            <button @click="openNewTaskModal()" class="px-4 py-2 bg-[#4A4238] text-white rounded-xl text-xs font-bold shadow-xs transition">
+                                + 新增第一筆待辦
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- GROUPED TASK CARDS (BY CATEGORY & ACCOUNT CODE) -->
+                    <div v-for="group in groupedFinancialTasks" :key="group.key" class="space-y-3">
+                        
+                        <!-- GROUP HEADER -->
+                        <div class="flex items-center justify-between px-2 pt-2">
+                            <div class="flex items-center space-x-2">
+                                <span :class="['px-2.5 py-1 text-xs font-bold rounded-lg shadow-2xs', 
+                                    group.category === '醫院費用' ? 'bg-[#E07A5F] text-white' : 
+                                    group.category === '計畫費用' ? 'bg-[#81B29A] text-white' : 'bg-[#4A4238] text-white']">
+                                    {{ group.category }}
+                                </span>
+
+                                <span v-if="group.category !== '醫院費用' && group.code" class="text-xs font-bold text-[#4A4238] bg-[#FAF8F5] border border-[#F0EAE1] px-2.5 py-0.5 rounded-md font-mono">
+                                    會計代號：{{ group.code }}
+                                </span>
+
+                                <span class="text-xs text-[#9E9488] font-medium">({{ group.tasks.length }} 筆明細)</span>
+                            </div>
+
+                            <div class="text-xs font-bold text-[#9E9488]">
+                                小計: <span class="text-rose-600 font-extrabold">支出 ${{ formatNumber(group.subtotalExpense) }}</span> / 
+                                <span class="text-[#81B29A] font-extrabold">收入 ${{ formatNumber(group.subtotalIncome) }}</span>
+                            </div>
+                        </div>
+
+                        <!-- TASK CARDS LIST -->
+                        <div v-for="task in group.tasks" :key="task.id" 
+                            :class="['bg-white rounded-3xl p-5 shadow-soft border transition space-y-3', task.status === '已完成' ? 'border-[#F0EAE1] opacity-80 bg-[#FAF8F5]/40' : 'border-[#F0EAE1] hover:border-[#E07A5F]/40']">
+
+                            <!-- TOP HEADER ROW -->
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1 space-y-1.5">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span class="text-[#E07A5F] text-sm">✨</span>
+
+                                        <!-- TITLE -->
+                                        <h4 :class="['font-bold text-base leading-snug', task.isMonthChanged ? 'text-rose-600 font-extrabold' : 'text-[#4A4238]']">
+                                            {{ task.title }}
+                                        </h4>
+
+                                        <!-- BADGES -->
+                                        <span v-if="task.isMonthChanged" class="px-2 py-0.5 text-[11px] font-bold bg-rose-50 text-rose-600 border border-rose-200 rounded-md">
+                                            當月異動/新增
                                         </span>
-                                        
-                                        <!-- Quick Confirm Toggle Button on Card -->
-                                        <button v-if="task.approvalStatus === '需與組長確認' || task.approvalStatus === '需與主任確認'" 
-                                            @click="quickConfirmApproval(task)" 
-                                            title="點擊改為已完成確認"
-                                            class="text-[10px] bg-purple-600 hover:bg-purple-700 text-white px-2 py-0.5 rounded-full font-medium transition flex items-center gap-0.5 shadow-2xs">
-                                            <i class="fa-solid fa-check text-[8px]"></i>
-                                            <span>完成確認</span>
-                                        </button>
-                                    </div>
 
-                                    <!-- Priority Tag -->
-                                    <span :class="getPriorityClass(task.priority)" class="text-[10px] px-2 py-0.5 rounded-full font-bold">
-                                        {{ task.priority }}優先
-                                    </span>
+                                        <span v-if="task.belongUnit" class="px-2 py-0.5 text-[11px] font-bold bg-[#F2F7F4] text-[#81B29A] border border-[#C8E0D5] rounded-md">
+                                            {{ task.belongUnit }}
+                                        </span>
 
-                                    <!-- Main Category Tag -->
-                                    <span class="bg-amber-100/70 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-[10px] px-2.5 py-0.5 rounded-full font-semibold">
-                                        {{ task.category }}
-                                    </span>
-
-                                    <!-- Sub Category Tag -->
-                                    <span v-if="task.subCategory" class="bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-[10px] px-2.5 py-0.5 rounded-full font-medium border border-orange-200/50 dark:border-orange-800/50">
-                                        {{ task.subCategory }}
-                                    </span>
-
-                                    <!-- Date tag (if in ALL view) -->
-                                    <span v-if="currentTab === 'all'" class="text-[11px] text-stone-400 bg-stone-100 dark:bg-stone-700/50 px-2 py-0.5 rounded-md">
-                                        <i class="fa-regular fa-calendar text-[10px] mr-1"></i>{{ task.date }}
-                                    </span>
-                                </div>
-
-                                <!-- EXPENSE WORKFLOW SPECIAL DISPLAY BOX -->
-                                <div v-if="task.subCategory === '費用'" class="mt-2.5 bg-blue-50/70 dark:bg-blue-950/30 p-3 rounded-2xl border border-blue-100 dark:border-blue-900/50 space-y-2">
-                                    <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
-                                        <div class="flex items-center space-x-2 text-blue-900 dark:text-blue-200 font-semibold">
-                                            <i class="fa-solid fa-file-invoice-dollar text-blue-600 dark:text-blue-400"></i>
-                                            <span>費用核銷追蹤：</span>
-                                            <span v-if="task.accountingDate" class="bg-white dark:bg-stone-800 px-2 py-0.5 rounded-lg text-[11px] border border-blue-200 text-blue-800 dark:text-blue-300">
-                                                <i class="fa-solid fa-paper-plane mr-1 text-[10px]"></i>送會計室: {{ task.accountingDate }}
+                                        <!-- Supervisor Approval Badge & Quick Confirm Button -->
+                                        <div v-if="task.approvalStatus && task.approvalStatus !== '無'" class="flex items-center gap-1">
+                                            <span :class="['px-2 py-0.5 text-[11px] font-bold rounded-md flex items-center gap-1', 
+                                                task.approvalStatus === '已完成確認' ? 'bg-[#F2F7F4] text-[#81B29A] border border-[#C8E0D5]' : 'bg-[#F5F2F9] text-[#9D81BA] border border-[#E4DCEE]']">
+                                                <i :class="task.approvalStatus === '已完成確認' ? 'fa-solid fa-circle-check' : 'fa-solid fa-user-clock'" class="text-[9px]"></i>
+                                                {{ task.approvalStatus }}
                                             </span>
-                                            <span v-else class="text-[11px] text-stone-400 font-normal italic">未標記送會計日期</span>
-                                        </div>
-
-                                        <!-- Quick Expense Status Dropdown -->
-                                        <div class="flex items-center space-x-1.5">
-                                            <span class="text-[11px] text-blue-700 dark:text-blue-300 font-medium">當前核銷進度:</span>
-                                            <select v-model="task.expenseStatus" @change="saveTasks()" class="text-xs bg-white dark:bg-stone-800 text-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-800 rounded-xl px-2 py-1 font-bold focus:ring-1 focus:ring-blue-400 shadow-2xs">
-                                                <option value="已開立">已開立</option>
-                                                <option value="會計確認">會計確認</option>
-                                                <option value="費用轉彙總">費用轉彙總</option>
-                                                <option value="出納">出納</option>
-                                                <option value="完成">完成</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <!-- Expense Visual Step Tracker -->
-                                    <div class="grid grid-cols-5 gap-1 pt-1 text-center text-[10px]">
-                                        <div v-for="step in expenseSteps" :key="step" 
-                                            :class="[
-                                                'py-1 px-1 rounded-lg font-medium transition-all flex flex-col items-center justify-center gap-0.5',
-                                                isExpenseStepActive(task.expenseStatus, step) ? 'bg-blue-600 text-white shadow-2xs font-bold' : 'bg-white/80 dark:bg-stone-800/80 text-stone-400 border border-blue-100/50'
-                                            ]">
-                                            <span>{{ step }}</span>
-                                            <i v-if="isExpenseStepActive(task.expenseStatus, step)" class="fa-solid fa-circle-check text-[8px]"></i>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Notes / Remarks (With Clickable URL Support) -->
-                                <div v-if="task.notes" class="text-xs text-stone-600 dark:text-stone-400 mt-2.5 whitespace-pre-line bg-stone-50 dark:bg-stone-900/40 p-2.5 rounded-xl border border-stone-100 dark:border-stone-800/80">
-                                    <i class="fa-regular fa-note-sticky text-amber-500 mr-1.5"></i><span v-html="renderNotesWithLinks(task.notes)"></span>
-                                </div>
-
-                                <!-- Execution History Timeline Section -->
-                                <div class="mt-3 pt-2.5 border-t border-stone-100 dark:border-stone-700/60">
-                                    <div class="flex items-center justify-between mb-1.5">
-                                        <button @click="toggleTaskHistory(task.id)" class="text-[11px] font-semibold text-stone-500 dark:text-stone-400 hover:text-amber-600 flex items-center space-x-1.5 transition">
-                                            <i class="fa-solid fa-clock-rotate-left text-amber-500"></i>
-                                            <span>執行歷程 ({{ (task.history || []).length }} 筆)</span>
-                                            <i :class="expandedHistory[task.id] ? 'fa-chevron-up' : 'fa-chevron-down'" class="fa-solid text-[9px] text-stone-400"></i>
-                                        </button>
-                                    </div>
-
-                                    <!-- Timeline View & Quick Add Box -->
-                                    <div v-if="expandedHistory[task.id]" class="space-y-2.5 mt-2 bg-amber-50/40 dark:bg-stone-900/40 p-3 rounded-2xl border border-amber-100/60 dark:border-stone-800">
-                                        <div v-if="!task.history || task.history.length === 0" class="text-[11px] text-stone-400 italic py-1">
-                                            尚無執行歷程紀錄，可於下方快速追加處理進度。
-                                        </div>
-                                        <div v-else class="relative pl-3 border-l-2 border-amber-300 dark:border-amber-700 space-y-2 my-1">
-                                            <div v-for="log in task.history" :key="log.id" class="relative group text-xs">
-                                                <div class="absolute -left-[17px] top-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-stone-800"></div>
-                                                <div class="flex items-center justify-between text-[10px] text-stone-400 mb-0.5">
-                                                    <span class="font-mono text-amber-700 dark:text-amber-300 font-semibold"><i class="fa-regular fa-clock mr-1"></i>{{ log.timestamp }}</span>
-                                                    <button @click="deleteHistoryLog(task, log.id)" title="刪除歷程" class="opacity-0 group-hover:opacity-100 text-stone-400 hover:text-rose-500 transition text-[10px] px-1">
-                                                        <i class="fa-solid fa-xmark"></i>
-                                                    </button>
-                                                </div>
-                                                <div class="text-stone-700 dark:text-stone-200 whitespace-pre-line leading-relaxed bg-white dark:bg-stone-800 p-2 rounded-xl border border-amber-100/80 dark:border-stone-700/80 text-xs shadow-2xs">
-                                                    {{ log.content }}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Quick Add Log Input -->
-                                        <div class="flex items-center gap-2 pt-1">
-                                            <input type="text" 
-                                                v-model="quickLogs[task.id]" 
-                                                @keyup.enter="addQuickLog(task)" 
-                                                placeholder="新增最新執行歷程 (Enter 提交)..." 
-                                                class="flex-grow text-xs px-3 py-1.5 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                                            <button @click="addQuickLog(task)" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-medium transition flex items-center gap-1 shrink-0 shadow-2xs">
-                                                <i class="fa-solid fa-plus text-[10px]"></i>
-                                                <span>記錄</span>
+                                            <button v-if="task.approvalStatus === '需與組長確認' || task.approvalStatus === '需與主任確認'" 
+                                                @click="quickConfirmApproval(task)"
+                                                title="一鍵改為已完成確認"
+                                                class="text-[10px] bg-[#9D81BA] hover:bg-[#8B6DAE] text-white px-2 py-0.5 rounded-md font-bold transition flex items-center gap-0.5 shadow-2xs">
+                                                <i class="fa-solid fa-check text-[8px]"></i>
+                                                <span>完成確認</span>
                                             </button>
                                         </div>
+
+                                        <span v-if="task.finCategory !== '醫院費用' && task.accountCode" class="px-2 py-0.5 text-[11px] font-bold bg-[#FAF8F5] text-[#4A4238] border border-[#F0EAE1] rounded-md font-mono">
+                                            代碼: {{ task.accountCode }}
+                                        </span>
+
+                                        <span :class="['px-2 py-0.5 text-[11px] font-bold rounded-md', 
+                                            task.priority === '高' || task.priority === '高優先' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-[#FAF8F5] text-[#4A4238] border border-[#F0EAE1]']">
+                                            {{ task.priority }}
+                                        </span>
+
+                                        <span class="px-2 py-0.5 text-[11px] font-bold bg-[#FDF0ED] text-[#E07A5F] border border-[#F8DCD4] rounded-md">
+                                            {{ task.businessCategory || task.category }}
+                                        </span>
+                                        <span v-if="task.finSubCategory || task.subCategory" class="px-2 py-0.5 text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 rounded-md">
+                                            {{ task.finSubCategory || task.subCategory }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- ACTIONS & STATUS SELECTOR -->
+                                <div class="flex items-center space-x-2">
+                                    <select v-model="task.status" @change="saveTasks" class="text-xs font-bold px-2.5 py-1.5 rounded-xl border border-[#F0EAE1] bg-[#FAF8F5] text-[#4A4238] focus:outline-none focus:ring-1 focus:ring-[#E07A5F]">
+                                        <option value="未開始">未開始</option>
+                                        <option value="進行中">進行中</option>
+                                        <option value="待長官確認">待長官確認</option>
+                                        <option value="已完成">已完成</option>
+                                        <option value="暫緩">暫緩</option>
+                                    </select>
+                                    <button @click="openEditTaskModal(task)" class="p-1.5 text-[#9E9488] hover:text-[#E07A5F] transition">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button @click="deleteTask(task.id)" class="p-1.5 text-[#9E9488] hover:text-rose-600 transition">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- EXPENSE STAGE TRACKER (If Sub Category === '費用') -->
+                            <div v-if="task.finSubCategory === '費用' || task.subCategory === '費用'" class="bg-[#FAF8F5] p-3 rounded-2xl border border-[#F0EAE1] space-y-2">
+                                <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                                    <div class="flex items-center space-x-2 text-[#4A4238] font-bold">
+                                        <i class="fa-solid fa-file-invoice-dollar text-[#E07A5F]"></i>
+                                        <span>費用核銷關卡追蹤：</span>
+                                        <span v-if="task.accountingDate" class="bg-white px-2 py-0.5 rounded-lg text-[11px] border border-[#F0EAE1] text-[#E07A5F]">
+                                            <i class="fa-solid fa-paper-plane mr-1 text-[10px]"></i>送會計室: {{ task.accountingDate }}
+                                        </span>
+                                        <span v-else class="text-[11px] text-[#9E9488] font-normal italic">未標記送會計日期</span>
+                                    </div>
+
+                                    <div class="flex items-center space-x-1.5">
+                                        <span class="text-[11px] text-[#9E9488] font-bold">進度:</span>
+                                        <select v-model="task.expenseStatus" @change="saveTasks()" class="text-xs bg-white text-[#4A4238] border border-[#F0EAE1] rounded-xl px-2 py-1 font-bold focus:ring-1 focus:ring-[#E07A5F] shadow-2xs">
+                                            <option value="已開立">已開立</option>
+                                            <option value="會計確認">會計確認</option>
+                                            <option value="費用轉彙總">費用轉彙總</option>
+                                            <option value="出納">出納</option>
+                                            <option value="完成">完成</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-5 gap-1 pt-1 text-center text-[10px]">
+                                    <div v-for="step in expenseSteps" :key="step" 
+                                        :class="['py-1.5 px-1 rounded-xl font-bold transition-all flex flex-col items-center justify-center gap-0.5', isExpenseStepActive(task.expenseStatus, step) ? 'bg-[#E07A5F] text-white shadow-2xs' : 'bg-white text-[#9E9488] border border-[#F0EAE1]']">
+                                        <span>{{ step }}</span>
+                                        <i v-if="isExpenseStepActive(task.expenseStatus, step)" class="fa-solid fa-circle-check text-[8px]"></i>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Right Section: Progress & Actions -->
-                        <div class="flex items-center justify-between md:justify-end space-x-3 pt-2 md:pt-0 border-t md:border-t-0 border-stone-100 dark:border-stone-700/50 flex-shrink-0">
-                            
-                            <!-- Status Selector Dropdown -->
-                            <select v-model="task.status" @change="saveTasks()" class="text-xs bg-stone-100 dark:bg-stone-700 text-stone-700 dark:text-stone-200 border-none rounded-xl px-2.5 py-1.5 focus:ring-1 focus:ring-amber-400 font-medium">
-                                <option value="未開始">未開始</option>
-                                <option value="進行中">進行中</option>
-                                <option value="已完成">已完成</option>
-                                <option value="暫緩">暫緩</option>
-                            </select>
-
-                            <!-- Actions -->
-                            <div class="flex items-center space-x-1">
-                                <button v-if="task.status !== '已完成'" @click="moveToTomorrow(task)" title="移至明天" class="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-stone-700 rounded-lg transition text-xs">
-                                    <i class="fa-solid fa-forward-step"></i>
-                                </button>
-                                <button @click="editTask(task)" title="編輯" class="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-stone-700 rounded-lg transition text-xs">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                                <button @click="deleteTask(task.id)" title="刪除" class="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-stone-700 rounded-lg transition text-xs">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
+                            <!-- FINANCIAL AMOUNT BOX -->
+                            <div v-if="task.amount !== undefined && task.amount !== null" class="bg-[#FDF0ED]/60 border border-[#F8DCD4] rounded-2xl p-3 flex items-center justify-between text-sm">
+                                <div class="flex items-center space-x-2 font-bold">
+                                    <span :class="['px-2 py-0.5 rounded-md text-xs text-white font-extrabold', task.amountType === '收入' ? 'bg-[#81B29A]' : 'bg-rose-500']">
+                                        {{ task.amountType || '支出' }}
+                                    </span>
+                                    <span :class="['text-base font-extrabold', task.amountType === '收入' ? 'text-[#81B29A]' : 'text-rose-600']">
+                                        {{ task.amountType === '收入' ? '+' : '-' }} NT$ {{ formatNumber(task.amount || 0) }}
+                                    </span>
+                                    <span class="text-[#9E9488] text-xs font-normal">
+                                        ({{ task.subItemName || task.title }})
+                                    </span>
+                                </div>
+                                <div v-if="task.receiptNo" class="text-xs text-[#E07A5F] bg-white px-2.5 py-1 rounded-xl border border-[#F8DCD4] font-mono font-bold">
+                                    📋 單號/傳票: {{ task.receiptNo }}
+                                </div>
                             </div>
+
+                            <!-- NOTE / DETAIL BOX -->
+                            <div v-if="task.note || task.notes" class="bg-[#FAF8F5] rounded-2xl p-3 text-xs text-[#4A4238] border border-[#F0EAE1] flex items-start space-x-2">
+                                <span class="text-[#E07A5F] mt-0.5">📋</span>
+                                <div class="whitespace-pre-line leading-relaxed" v-html="renderNotesWithLinks(task.note || task.notes)"></div>
+                            </div>
+
+                            <!-- EXECUTION HISTORY TIMELINE SECTION -->
+                            <div class="pt-1 flex flex-col space-y-2">
+                                <div class="flex items-center justify-between text-xs text-[#9E9488]">
+                                    <button @click="task.showHistory = !task.showHistory" class="hover:text-[#4A4238] transition flex items-center space-x-1 font-bold">
+                                        <i class="fa-regular fa-clock text-[#E07A5F]"></i>
+                                        <span>執行歷程 ({{ (task.history || []).length }} 筆)</span>
+                                        <i :class="['fa-solid text-[10px] transition-transform', task.showHistory ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+                                    </button>
+                                    <span class="font-mono text-[11px]"><i class="fa-regular fa-calendar mr-1"></i>{{ task.date }}</span>
+                                </div>
+
+                                <!-- EXPANDED HISTORY & QUICK ADD -->
+                                <div v-if="task.showHistory" class="bg-[#FAF8F5] rounded-2xl p-3 text-xs space-y-2.5 border border-[#F0EAE1]">
+                                    <div v-if="!task.history || task.history.length === 0" class="text-[11px] text-[#9E9488] italic">
+                                        尚無執行歷程紀錄，可在下方輸入框快速追加記錄。
+                                    </div>
+                                    <div v-else class="space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar pr-1">
+                                        <div v-for="(h, idx) in task.history" :key="idx" class="flex items-start justify-between bg-white p-2 rounded-xl border border-[#F0EAE1] text-[#4A4238]">
+                                            <span class="leading-relaxed">{{ h.text || h.content }}</span>
+                                            <span class="text-[#9E9488] font-mono text-[10px] whitespace-nowrap ml-2 mt-0.5">{{ h.time || h.timestamp }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Quick Add History Log Input -->
+                                    <div class="flex items-center gap-2 pt-1 border-t border-[#F0EAE1]">
+                                        <input type="text" v-model="quickLogs[task.id]" @keyup.enter="addQuickLog(task)" placeholder="新增最新執行歷程 (Enter 提交)..." 
+                                            class="flex-grow text-xs px-3 py-1.5 rounded-xl bg-white border border-[#F0EAE1] focus:outline-none focus:ring-2 focus:ring-[#E07A5F]">
+                                        <button @click="addQuickLog(task)" class="px-3 py-1.5 bg-[#E07A5F] hover:bg-[#D0694E] text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shrink-0 shadow-2xs">
+                                            <i class="fa-solid fa-plus text-[10px]"></i>
+                                            <span>記錄</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
+
                 </div>
+
             </main>
 
-            <!-- Change Password Modal -->
-            <div v-if="showChangePasswordModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 no-print">
-                <div class="bg-white dark:bg-stone-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-700 space-y-4">
-                    <div class="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-700">
-                        <h3 class="font-bold text-base text-stone-800 dark:text-stone-100 flex items-center gap-1.5">
-                            <i class="fa-solid fa-key text-amber-500"></i> 修改存取密碼
-                        </h3>
-                        <button @click="showChangePasswordModal = false" class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200">
-                            <i class="fa-solid fa-xmark text-lg"></i>
-                        </button>
+            <!-- ================= ADD / EDIT TASK MODAL ================= -->
+            <div v-if="showModal === 'task'" class="fixed inset-0 z-50 flex items-center justify-center bg-[#4A4238]/60 backdrop-blur-xs p-4 overflow-y-auto no-print">
+                <div class="bg-white rounded-3xl shadow-soft-lg max-w-xl w-full p-6 space-y-4 border border-[#F0EAE1] my-8 animate-fade-in">
+                    <div class="flex justify-between items-center border-b border-[#F0EAE1] pb-3">
+                        <h3 class="text-lg font-bold text-[#4A4238]">{{ editingTaskId ? '編輯待辦/經費事項' : '新增待辦/經費事項' }}</h3>
+                        <button @click="showModal = null" class="text-[#9E9488] hover:text-[#4A4238] text-lg"><i class="fa-solid fa-xmark"></i></button>
                     </div>
 
-                    <div class="space-y-3 text-xs">
+                    <form @submit.prevent="saveTaskForm" class="space-y-3.5 text-xs">
                         <div>
-                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">請輸入新密碼</label>
-                            <input type="password" v-model="newPasswordInput" placeholder="輸入新密碼..." class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                            <label class="block font-bold text-[#4A4238] mb-1">事項標題 *</label>
+                            <input type="text" v-model="formTask.title" required placeholder="例如：軟體工具使用費07月份、公文線上簽核..." class="w-full px-3.5 py-2.5 border border-[#F0EAE1] bg-[#FAF8F5] rounded-2xl text-xs focus:ring-2 focus:ring-[#E07A5F]">
                         </div>
-                    </div>
 
-                    <div class="flex justify-end space-x-2 pt-2 border-t border-stone-100 dark:border-stone-700">
-                        <button @click="showChangePasswordModal = false" class="px-4 py-2 rounded-xl border border-stone-200 text-stone-600 dark:text-stone-300 text-xs font-medium hover:bg-stone-100">取消</button>
-                        <button @click="saveNewPassword()" class="px-4 py-2 rounded-xl bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 shadow-xs">儲存新密碼</button>
-                    </div>
-                </div>
-            </div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block font-bold text-[#4A4238] mb-1">執行日期</label>
+                                <input type="date" v-model="formTask.date" class="w-full px-3 py-2 border border-[#F0EAE1] bg-[#FAF8F5] rounded-xl text-xs">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#4A4238] mb-1">主業務類別</label>
+                                <select v-model="formTask.businessCategory" @change="onCategoryChangeInForm" class="w-full px-3 py-2 border border-[#F0EAE1] bg-[#FAF8F5] rounded-xl font-bold">
+                                    <option v-for="c in businessCategories" :key="c" :value="c">{{ c }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#4A4238] mb-1">細項目類別</label>
+                                <select v-model="formTask.finSubCategory" class="w-full px-3 py-2 border border-[#F0EAE1] bg-[#FAF8F5] rounded-xl font-bold">
+                                    <option v-for="s in (subCategoryOptions[formTask.businessCategory] || finSubCategories)" :key="s" :value="s">{{ s }}</option>
+                                </select>
+                            </div>
+                        </div>
 
-            <!-- Task Edit / Create Modal -->
-            <div v-if="showTaskModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 no-print">
-                <div class="bg-white dark:bg-stone-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-700 space-y-4 max-h-[90vh] overflow-y-auto">
-                    <div class="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-700 sticky top-0 bg-white dark:bg-stone-800 z-10">
-                        <h3 class="font-bold text-base text-stone-800 dark:text-stone-100">
-                            {{ editingTaskId ? '編輯待辦事項' : '新增待辦事項' }}
-                        </h3>
-                        <button @click="showTaskModal = false" class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200">
-                            <i class="fa-solid fa-xmark text-lg"></i>
-                        </button>
-                    </div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block font-bold text-[#4A4238] mb-1">費用大類</label>
+                                <select v-model="formTask.finCategory" class="w-full px-3 py-2 border border-[#F0EAE1] bg-[#FAF8F5] rounded-xl font-bold">
+                                    <option value="醫院費用">醫院費用</option>
+                                    <option value="計畫費用">計畫費用</option>
+                                    <option value="非主任開銷另外申請給中心的費用">非主任開銷另外申請給中心</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#4A4238] mb-1">四方歸屬</label>
+                                <select v-model="formTask.belongUnit" class="w-full px-3 py-2 border border-[#F0EAE1] bg-[#FAF8F5] rounded-xl font-bold">
+                                    <option value="醫院">醫院</option>
+                                    <option value="中心">中心</option>
+                                    <option value="學校">學校</option>
+                                    <option value="外部">外部</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#4A4238] mb-1">會計代號 (醫院無須填)</label>
+                                <input type="text" v-model="formTask.accountCode" placeholder="如 113221T5" class="w-full px-3 py-2 border border-[#F0EAE1] bg-[#FAF8F5] rounded-xl font-mono">
+                            </div>
+                        </div>
 
-                    <div class="space-y-3.5 text-xs">
-                        <div>
-                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">事項標題 *</label>
-                            <input type="text" v-model="formTask.title" placeholder="例如: 8月份計程車資核銷、公文線上簽核..." class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm">
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block font-bold text-[#4A4238] mb-1">收支類型</label>
+                                <select v-model="formTask.amountType" class="w-full px-3 py-2 border border-[#F0EAE1] bg-[#FAF8F5] rounded-xl font-bold">
+                                    <option value="支出">支出 (-)</option>
+                                    <option value="收入">收入 (+)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#4A4238] mb-1">金額 (NT$)</label>
+                                <input type="number" v-model.number="formTask.amount" placeholder="0" class="w-full px-3 py-2 border border-[#F0EAE1] bg-[#FAF8F5] rounded-xl font-bold">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#4A4238] mb-1">單號/傳票號碼</label>
+                                <input type="text" v-model="formTask.receiptNo" placeholder="傳票號碼" class="w-full px-3 py-2 border border-[#F0EAE1] bg-[#FAF8F5] rounded-xl font-mono">
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">執行日期</label>
-                                <input type="date" v-model="formTask.date" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                            </div>
-                            <div>
-                                <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">主業務類別</label>
-                                <select v-model="formTask.category" @change="onCategoryChange()" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium">
-                                    <option value="行政業務">行政業務</option>
-                                    <option value="人事業務">人事業務</option>
-                                    <option value="QMS">QMS</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">細項目類別</label>
-                                <select v-model="formTask.subCategory" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                                    <option v-for="sub in (subCategoryOptions[formTask.category] || [])" :key="sub" :value="sub">{{ sub }}</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">優先等級</label>
-                                <select v-model="formTask.priority" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                                    <option value="高">高 (High)</option>
-                                    <option value="中">中 (Medium)</option>
-                                    <option value="低">低 (Low)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">當前進度</label>
-                                <select v-model="formTask.status" class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                                    <option value="未開始">未開始</option>
-                                    <option value="進行中">進行中</option>
-                                    <option value="已完成">已完成</option>
-                                    <option value="暫緩">暫緩</option>
-                                </select>
-                            </div>
-
-                            <!-- Approval Status Dropdown -->
-                            <div>
-                                <label class="block font-semibold text-purple-900 dark:text-purple-300 mb-1">主管簽核/確認需求</label>
-                                <select v-model="formTask.approvalStatus" class="w-full px-3 py-2 rounded-xl bg-purple-50/60 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-900 dark:text-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium">
+                                <label class="block font-bold text-[#9D81BA] mb-1">主管簽核/確認需求</label>
+                                <select v-model="formTask.approvalStatus" class="w-full px-3 py-2 rounded-xl bg-[#F5F2F9] border border-[#E4DCEE] text-[#9D81BA] font-bold">
                                     <option value="無">無須確認</option>
                                     <option value="需與組長確認">需與組長確認</option>
                                     <option value="需與主任確認">需與主任確認</option>
                                     <option value="已完成確認">已完成確認</option>
                                 </select>
                             </div>
+                            <div>
+                                <label class="block font-bold text-[#4A4238] mb-1">優先等級</label>
+                                <select v-model="formTask.priority" class="w-full px-3 py-2 border border-[#F0EAE1] bg-[#FAF8F5] rounded-xl font-bold">
+                                    <option value="高優先">高優先</option>
+                                    <option value="中優先">中優先</option>
+                                    <option value="低優先">低優先</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <!-- EXPENSE SPECIAL FIELDS IN MODAL -->
-                        <div v-if="formTask.subCategory === '費用'" class="p-3 bg-blue-50/80 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800/80 space-y-3">
-                            <div class="font-bold text-blue-900 dark:text-blue-300 flex items-center space-x-1.5">
+                        <!-- SPECIAL EXPENSE STAGE IN MODAL (If Sub Category === '費用') -->
+                        <div v-if="formTask.finSubCategory === '費用'" class="p-3 bg-[#FAF8F5] rounded-2xl border border-[#F0EAE1] space-y-2">
+                            <div class="font-bold text-[#E07A5F] flex items-center space-x-1.5">
                                 <i class="fa-solid fa-receipt"></i>
-                                <span>費用核銷專屬資訊</span>
+                                <span>費用核銷專屬關卡設定</span>
                             </div>
-                            
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">送至會計室日期</label>
-                                    <input type="date" v-model="formTask.accountingDate" class="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-stone-900 border border-blue-200 dark:border-stone-700 focus:outline-none">
+                                    <label class="block font-bold text-[#4A4238] mb-1">送會計室日期</label>
+                                    <input type="date" v-model="formTask.accountingDate" class="w-full px-3 py-1.5 rounded-xl border border-[#F0EAE1] bg-white">
                                 </div>
                                 <div>
-                                    <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">核銷狀態</label>
-                                    <select v-model="formTask.expenseStatus" class="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-stone-900 border border-blue-200 dark:border-stone-700 focus:outline-none font-medium">
+                                    <label class="block font-bold text-[#4A4238] mb-1">當前核銷進度</label>
+                                    <select v-model="formTask.expenseStatus" class="w-full px-3 py-1.5 rounded-xl border border-[#F0EAE1] bg-white font-bold">
                                         <option value="已開立">已開立</option>
                                         <option value="會計確認">會計確認</option>
                                         <option value="費用轉彙總">費用轉彙總</option>
@@ -588,50 +738,65 @@
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">備註 / 執行記錄 (可附網址)</label>
-                            <textarea v-model="formTask.notes" rows="2" placeholder="公文文號、系統網址 (如 https://his.cmuh.org.tw/webapp/app/)..." class="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-400"></textarea>
+                        <div class="flex items-center space-x-4 pt-1">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" v-model="formTask.isMonthChanged" class="rounded text-[#E07A5F] focus:ring-[#E07A5F]">
+                                <span class="font-bold text-rose-600">當月有異動/新增 (顯示紅字標記)</span>
+                            </label>
                         </div>
 
-                        <!-- History logs inside modal -->
-                        <div v-if="editingTaskId && formTask.history && formTask.history.length > 0">
-                            <label class="block font-semibold text-stone-700 dark:text-stone-300 mb-1">歷史執行歷程 ({{ formTask.history.length }})</label>
-                            <div class="max-h-32 overflow-y-auto space-y-1.5 p-2 bg-stone-50 dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-700">
-                                <div v-for="log in formTask.history" :key="log.id" class="text-xs bg-white dark:bg-stone-800 p-2 rounded-lg border border-stone-100 dark:border-stone-700 flex justify-between items-start">
-                                    <div>
-                                        <span class="text-[10px] text-amber-600 font-mono block">{{ log.timestamp }}</span>
-                                        <span class="text-stone-700 dark:text-stone-300">{{ log.content }}</span>
-                                    </div>
-                                    <button @click="deleteModalHistoryLog(log.id)" class="text-stone-400 hover:text-rose-500 text-xs ml-2">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </div>
-                            </div>
+                        <div>
+                            <label class="block font-bold text-[#4A4238] mb-1">備註 / 執行記錄 (可附網址)</label>
+                            <textarea v-model="formTask.note" rows="3" placeholder="例如：Claude Pro + ChatGPT Plus 訂閱費、公文簽核網址..." class="w-full px-3.5 py-2.5 border border-[#F0EAE1] bg-[#FAF8F5] rounded-2xl"></textarea>
+                        </div>
+
+                        <div class="flex justify-end space-x-2 pt-3 border-t border-[#F0EAE1]">
+                            <button type="button" @click="showModal = null" class="px-4 py-2 bg-[#FAF8F5] text-[#4A4238] rounded-xl font-bold border border-[#F0EAE1]">取消</button>
+                            <button type="submit" class="px-5 py-2 bg-[#E07A5F] hover:bg-[#D0694E] text-white font-bold rounded-xl shadow-xs">儲存事項</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ================= CHANGE PASSWORD MODAL ================= -->
+            <div v-if="showModal === 'changePassword'" class="fixed inset-0 z-50 flex items-center justify-center bg-[#4A4238]/60 backdrop-blur-xs p-4 no-print">
+                <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-soft-lg border border-[#F0EAE1] space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-[#F0EAE1]">
+                        <h3 class="font-bold text-base text-[#4A4238] flex items-center gap-1.5">
+                            <i class="fa-solid fa-key text-[#E07A5F]"></i> 修改存取密碼
+                        </h3>
+                        <button @click="showModal = null" class="text-[#9E9488] hover:text-[#4A4238]">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-3 text-xs">
+                        <div>
+                            <label class="block font-bold text-[#4A4238] mb-1">請輸入新密碼</label>
+                            <input type="password" v-model="newPasswordInput" placeholder="輸入新密碼..." class="w-full px-3.5 py-2.5 rounded-2xl bg-[#FAF8F5] border border-[#F0EAE1] focus:outline-none focus:ring-2 focus:ring-[#E07A5F]">
                         </div>
                     </div>
-
-                    <div class="flex justify-end space-x-2 pt-3 border-t border-stone-100 dark:border-stone-700">
-                        <button @click="showTaskModal = false" class="px-4 py-2 rounded-xl border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 text-xs font-medium hover:bg-stone-100">取消</button>
-                        <button @click="saveFormTask()" class="px-4 py-2 rounded-xl bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 shadow-xs">儲存事項</button>
+                    <div class="flex justify-end space-x-2 pt-2 border-t border-[#F0EAE1]">
+                        <button @click="showModal = null" class="px-4 py-2 rounded-xl border border-[#F0EAE1] text-[#4A4238] text-xs font-bold hover:bg-[#FAF8F5]">取消</button>
+                        <button @click="saveNewPassword()" class="px-4 py-2 rounded-xl bg-[#E07A5F] text-white text-xs font-bold hover:bg-[#D0694E] shadow-xs">儲存新密碼</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Export Work Log Center Modal -->
-            <div v-if="showExportModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 no-print overflow-y-auto">
-                <div class="bg-white dark:bg-stone-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-700 space-y-5 my-8">
+            <!-- ================= EXPORT WORK LOG CENTER MODAL ================= -->
+            <div v-if="showExportModal" class="fixed inset-0 z-50 flex items-center justify-center bg-[#4A4238]/60 backdrop-blur-xs p-4 no-print overflow-y-auto">
+                <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-soft-lg border border-[#F0EAE1] space-y-5 my-8 animate-fade-in">
                     
-                    <div class="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-700">
+                    <div class="flex items-center justify-between pb-3 border-b border-[#F0EAE1]">
                         <div class="flex items-center space-x-2">
-                            <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                            <div class="w-9 h-9 rounded-2xl bg-[#F2F7F4] text-[#81B29A] flex items-center justify-center text-lg border border-[#C8E0D5]">
                                 <i class="fa-solid fa-file-export"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-base text-stone-800 dark:text-stone-100">工作日誌匯出中心</h3>
-                                <p class="text-xs text-stone-400">自訂日期區間與匯出樣式</p>
+                                <h3 class="font-bold text-base text-[#4A4238]">工作日誌與對帳匯出中心</h3>
+                                <p class="text-xs text-[#9E9488]">自訂日期區間、格式與 AI 報告摘要</p>
                             </div>
                         </div>
-                        <button @click="showExportModal = false" class="text-stone-400 hover:text-stone-600">
+                        <button @click="showExportModal = false" class="text-[#9E9488] hover:text-[#4A4238]">
                             <i class="fa-solid fa-xmark text-lg"></i>
                         </button>
                     </div>
@@ -639,69 +804,69 @@
                     <!-- Range Selector -->
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
-                            <label class="text-xs font-semibold text-stone-700 dark:text-stone-300">選擇匯出區間：</label>
+                            <label class="text-xs font-bold text-[#4A4238]">選擇匯出區間：</label>
                             <div class="flex space-x-1.5">
-                                <button @click="setExportRange('today')" class="text-[11px] px-2 py-1 rounded bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 text-stone-600 dark:text-stone-300">今日</button>
-                                <button @click="setExportRange('week')" class="text-[11px] px-2 py-1 rounded bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 text-stone-600 dark:text-stone-300">本週</button>
-                                <button @click="setExportRange('month')" class="text-[11px] px-2 py-1 rounded bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 text-stone-600 dark:text-stone-300">本月</button>
+                                <button @click="setExportRange('today')" class="text-[11px] px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#F0EAE1] text-[#4A4238] font-bold">今日</button>
+                                <button @click="setExportRange('week')" class="text-[11px] px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#F0EAE1] text-[#4A4238] font-bold">本週</button>
+                                <button @click="setExportRange('month')" class="text-[11px] px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#F0EAE1] text-[#4A4238] font-bold">本月</button>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <span class="text-xs text-stone-500 mb-1 block">開始日期</span>
-                                <input type="date" v-model="exportStartDate" class="w-full text-xs px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700">
+                                <span class="text-xs text-[#9E9488] mb-1 block font-medium">開始日期</span>
+                                <input type="date" v-model="exportStartDate" class="w-full text-xs px-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#F0EAE1] font-bold text-[#4A4238]">
                             </div>
                             <div>
-                                <span class="text-xs text-stone-500 mb-1 block">結束日期</span>
-                                <input type="date" v-model="exportEndDate" class="w-full text-xs px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700">
+                                <span class="text-xs text-[#9E9488] mb-1 block font-medium">結束日期</span>
+                                <input type="date" v-model="exportEndDate" class="w-full text-xs px-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#F0EAE1] font-bold text-[#4A4238]">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Export Filter Options -->
-                    <div class="bg-stone-50 dark:bg-stone-900/60 p-3.5 rounded-xl border border-stone-100 dark:border-stone-700 space-y-2 text-xs">
-                        <div class="font-semibold text-stone-700 dark:text-stone-300 mb-1">內容過濾設定：</div>
-                        <label class="flex items-center space-x-2 text-stone-600 dark:text-stone-300 cursor-pointer">
-                            <input type="checkbox" v-model="exportOnlyCompleted" class="rounded text-amber-600 focus:ring-amber-500">
+                    <!-- Filter Checkboxes -->
+                    <div class="bg-[#FAF8F5] p-3.5 rounded-2xl border border-[#F0EAE1] space-y-2 text-xs">
+                        <div class="font-bold text-[#4A4238] mb-1">內容過濾設定：</div>
+                        <label class="flex items-center space-x-2 text-[#4A4238] cursor-pointer">
+                            <input type="checkbox" v-model="exportOnlyCompleted" class="rounded text-[#E07A5F] focus:ring-[#E07A5F]">
                             <span>僅匯出「已完成」事項</span>
                         </label>
-                        <label class="flex items-center space-x-2 text-stone-600 dark:text-stone-300 cursor-pointer">
-                            <input type="checkbox" v-model="exportIncludeNotes" class="rounded text-amber-600 focus:ring-amber-500">
-                            <span>包含備註、費用核銷細節與執行歷程</span>
+                        <label class="flex items-center space-x-2 text-[#4A4238] cursor-pointer">
+                            <input type="checkbox" v-model="exportIncludeNotes" class="rounded text-[#E07A5F] focus:ring-[#E07A5F]">
+                            <span>包含備註、傳票細節與執行歷程</span>
                         </label>
                     </div>
 
-                    <!-- Matching Summary Stats -->
-                    <div class="flex items-center justify-between text-xs text-stone-500 bg-amber-50/50 dark:bg-stone-900/40 px-3.5 py-2.5 rounded-xl border border-amber-100 dark:border-stone-700">
-                        <span>此區間共有 <strong class="text-amber-600 dark:text-amber-400 font-bold">{{ exportTasksMatch.length }}</strong> 筆待辦紀錄</span>
-                        <button @click="generateAISummary()" :disabled="isGeneratingAI" class="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg font-medium transition flex items-center space-x-1.5">
+                    <!-- Summary Matches Bar & AI Generation Button -->
+                    <div class="flex items-center justify-between text-xs bg-[#FDF0ED] px-3.5 py-2.5 rounded-2xl border border-[#F8DCD4]">
+                        <span>此區間共有 <strong class="text-[#E07A5F] font-bold">{{ exportTasksMatch.length }}</strong> 筆紀錄</span>
+                        <button @click="generateAISummary()" :disabled="isGeneratingAI" class="text-xs bg-[#E07A5F] hover:bg-[#D0694E] text-white px-3 py-1.5 rounded-xl font-bold transition flex items-center space-x-1.5 shadow-2xs">
                             <i v-if="isGeneratingAI" class="fa-solid fa-spinner animate-spin"></i>
                             <i v-else class="fa-solid fa-wand-magic-sparkles"></i>
                             <span>AI 產出工作成果摘要</span>
                         </button>
                     </div>
 
-                    <!-- AI Summary Output Box (If Generated) -->
-                    <div v-if="aiSummaryText" class="p-3.5 bg-amber-50/60 dark:bg-stone-900/60 rounded-xl border border-amber-200 dark:border-stone-700 text-xs space-y-1.5">
-                        <div class="flex items-center justify-between font-bold text-amber-900 dark:text-amber-300">
+                    <!-- AI Summary Box -->
+                    <div v-if="aiSummaryText" class="p-3.5 bg-[#FAF8F5] rounded-2xl border border-[#F0EAE1] text-xs space-y-1.5">
+                        <div class="flex items-center justify-between font-bold text-[#E07A5F]">
                             <span><i class="fa-solid fa-robot mr-1"></i> Gemini AI 整理日誌摘要：</span>
-                            <button @click="copyText(aiSummaryText)" class="text-[11px] text-amber-700 hover:underline">複製摘要</button>
+                            <button @click="copyText(aiSummaryText)" class="text-[11px] text-[#E07A5F] hover:underline font-bold">複製摘要</button>
                         </div>
-                        <p class="text-stone-700 dark:text-stone-300 whitespace-pre-line leading-relaxed">{{ aiSummaryText }}</p>
+                        <p class="text-[#4A4238] whitespace-pre-line leading-relaxed">{{ aiSummaryText }}</p>
                     </div>
 
-                    <!-- Export Action Buttons -->
+                    <!-- Export Buttons -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                        <button @click="exportPDF()" class="py-2.5 px-3 rounded-xl bg-stone-900 dark:bg-stone-100 dark:text-stone-900 text-white text-xs font-semibold hover:bg-stone-800 flex items-center justify-center space-x-2 shadow-xs">
+                        <button @click="exportPDF()" class="py-2.5 px-3 rounded-xl bg-[#4A4238] text-white text-xs font-bold hover:bg-[#3D362E] flex items-center justify-center space-x-2 shadow-xs">
                             <i class="fa-solid fa-print"></i>
                             <span>PDF / 列印預覽</span>
                         </button>
-                        <button @click="exportCSV()" class="py-2.5 px-3 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 flex items-center justify-center space-x-2 shadow-xs">
+                        <button @click="exportCSV()" class="py-2.5 px-3 rounded-xl bg-[#81B29A] hover:bg-[#6F9F88] text-white text-xs font-bold flex items-center justify-center space-x-2 shadow-xs">
                             <i class="fa-solid fa-file-csv"></i>
                             <span>下載 CSV 表格</span>
                         </button>
-                        <button @click="exportMarkdown()" class="py-2.5 px-3 rounded-xl bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 flex items-center justify-center space-x-2 shadow-xs">
+                        <button @click="exportMarkdown()" class="py-2.5 px-3 rounded-xl bg-[#E07A5F] hover:bg-[#D0694E] text-white text-xs font-bold flex items-center justify-center space-x-2 shadow-xs">
                             <i class="fa-solid fa-copy"></i>
                             <span>複製 Markdown 格式</span>
                         </button>
@@ -709,49 +874,49 @@
                 </div>
             </div>
 
-            <!-- PRINT ONLY VIEW (Rendered for Window.print / PDF Export) -->
+            <!-- ================= PRINT ONLY REPORT VIEW ================= -->
             <div class="print-only p-8 max-w-4xl mx-auto">
                 <div class="text-center border-b pb-4 mb-6">
-                    <h1 class="text-2xl font-bold text-stone-900">yuan 工作日誌報告</h1>
-                    <p class="text-sm text-stone-600 mt-1">區間: {{ exportStartDate }} ~ {{ exportEndDate }} | 產出日期: {{ todayStr }}</p>
+                    <h1 class="text-2xl font-bold text-[#4A4238]">yuan 工作日誌與經費對帳報告</h1>
+                    <p class="text-sm text-[#9E9488] mt-1">區間: {{ exportStartDate }} ~ {{ exportEndDate }} | 產出日期: {{ todayStr }}</p>
                 </div>
 
-                <!-- AI Summary section in Print if present -->
-                <div v-if="aiSummaryText" class="mb-6 p-4 bg-stone-50 border rounded-xl">
-                    <h3 class="font-bold text-sm text-stone-800 mb-1">【重點成果與執行摘要】</h3>
-                    <p class="text-xs text-stone-700 whitespace-pre-line leading-relaxed">{{ aiSummaryText }}</p>
+                <div v-if="aiSummaryText" class="mb-6 p-4 bg-[#FAF8F5] border border-[#F0EAE1] rounded-xl">
+                    <h3 class="font-bold text-sm text-[#4A4238] mb-1">【重點成果與執行摘要】</h3>
+                    <p class="text-xs text-[#4A4238] whitespace-pre-line leading-relaxed">{{ aiSummaryText }}</p>
                 </div>
 
-                <!-- Task List Table for Print -->
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
-                        <tr class="bg-stone-100 border-b">
-                            <th class="py-2 px-3 font-semibold">日期</th>
-                            <th class="py-2 px-3 font-semibold">業務分類 (細項)</th>
-                            <th class="py-2 px-3 font-semibold">事項名稱</th>
-                            <th class="py-2 px-3 font-semibold">簽核需求</th>
-                            <th class="py-2 px-3 font-semibold">進度/費用關卡</th>
-                            <th class="py-2 px-3 font-semibold">備註與執行歷程</th>
+                        <tr class="bg-[#FAF8F5] border-b border-[#F0EAE1]">
+                            <th class="py-2 px-3 font-bold">日期</th>
+                            <th class="py-2 px-3 font-bold">業務分類</th>
+                            <th class="py-2 px-3 font-bold">事項名稱</th>
+                            <th class="py-2 px-3 font-bold">金額 / 傳票</th>
+                            <th class="py-2 px-3 font-bold">簽核與進度</th>
+                            <th class="py-2 px-3 font-bold">備註與歷程</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y">
+                    <tbody class="divide-y divide-[#F0EAE1]">
                         <tr v-for="t in exportTasksMatch" :key="t.id">
                             <td class="py-2 px-3 whitespace-nowrap">{{ t.date }}</td>
-                            <td class="py-2 px-3 whitespace-nowrap font-medium">{{ t.category }} <span v-if="t.subCategory" class="text-stone-500">({{ t.subCategory }})</span></td>
-                            <td class="py-2 px-3 font-medium">{{ t.title }}</td>
-                            <td class="py-2 px-3 whitespace-nowrap">{{ t.approvalStatus && t.approvalStatus !== '無' ? t.approvalStatus : '-' }}</td>
+                            <td class="py-2 px-3 whitespace-nowrap font-medium">{{ t.businessCategory || t.category }} <span v-if="t.finSubCategory || t.subCategory" class="text-[#9E9488]">({{ t.finSubCategory || t.subCategory }})</span></td>
+                            <td class="py-2 px-3 font-bold">{{ t.title }}</td>
+                            <td class="py-2 px-3 whitespace-nowrap font-mono">
+                                <span v-if="t.amount !== undefined && t.amount !== null">
+                                    {{ t.amountType === '收入' ? '+' : '-' }} ${{ formatNumber(t.amount) }}
+                                </span>
+                                <span v-else>-</span>
+                            </td>
                             <td class="py-2 px-3 whitespace-nowrap">
                                 <div>{{ t.status }}</div>
-                                <div v-if="t.subCategory === '費用'" class="text-[10px] text-blue-700 font-semibold">
-                                    送會計: {{ t.accountingDate || '未定' }} | 關卡: {{ t.expenseStatus || '已開立' }}
-                                </div>
+                                <div v-if="t.approvalStatus && t.approvalStatus !== '無'" class="text-[10px] text-[#9D81BA] font-bold">{{ t.approvalStatus }}</div>
                             </td>
                             <td class="py-2 px-3">
-                                <div>{{ t.notes || '-' }}</div>
-                                <div v-if="t.history && t.history.length > 0" class="mt-1 pt-1 border-t border-stone-200 text-[10px] text-stone-600 space-y-0.5">
-                                    <div class="font-bold text-stone-700">執行歷程：</div>
-                                    <div v-for="h in t.history" :key="h.id">
-                                        • <span class="font-mono">{{ h.timestamp }}</span>: {{ h.content }}
+                                <div>{{ t.note || t.notes || '-' }}</div>
+                                <div v-if="t.history && t.history.length > 0" class="mt-1 pt-1 border-t border-[#F0EAE1] text-[10px] text-[#9E9488] space-y-0.5">
+                                    <div v-for="h in t.history" :key="h.id || h.time">
+                                        • <span class="font-mono">{{ h.time || h.timestamp }}</span>: {{ h.text || h.content }}
                                     </div>
                                 </div>
                             </td>
@@ -759,74 +924,67 @@
                     </tbody>
                 </table>
 
-                <div class="mt-8 pt-4 border-t flex justify-between text-[11px] text-stone-500">
+                <div class="mt-8 pt-4 border-t flex justify-between text-[11px] text-[#9E9488]">
                     <span>報告核閱簽章：__________________</span>
                     <span>yuan 代辦事項系統自動生成</span>
                 </div>
             </div>
         </template>
 
-        <!-- Toast Message Notification -->
-        <div v-if="toastMsg" class="fixed bottom-5 right-5 bg-stone-900 text-white text-xs px-4 py-2.5 rounded-xl shadow-xl z-50 no-print flex items-center space-x-2 animate-bounce">
-            <i class="fa-solid fa-circle-check text-emerald-400"></i>
-            <span>{{ toastMsg }}</span>
+        <!-- TOAST NOTIFICATION -->
+        <div v-if="toastMessage" class="fixed bottom-6 right-6 z-50 bg-[#4A4238] text-white px-4 py-3 rounded-2xl shadow-soft-lg flex items-center space-x-2 text-xs animate-bounce no-print">
+            <span>✨</span>
+            <span>{{ toastMessage }}</span>
         </div>
 
     </div>
 
+    <!-- ================= VUE 3 APPLICATION LOGIC ================= -->
     <script>
         const { createApp, ref, computed, onMounted } = Vue;
 
         createApp({
             setup() {
-                // System Security Password Management
-                const DEFAULT_PASS = '0527';
-                const PASS_KEY = 'yuan_todo_app_pass_v1';
                 const isLocked = ref(true);
                 const inputPassword = ref('');
                 const showPassword = ref(false);
-                const lockErrorMsg = ref('');
-                const showChangePasswordModal = ref(false);
+                const lockError = ref(false);
+                const showModal = ref(null); // 'task', 'export', 'changePassword'
                 const newPasswordInput = ref('');
-
-                const getSavedPassword = () => {
-                    return localStorage.getItem(PASS_KEY) || DEFAULT_PASS;
-                };
+                const appPin = ref(localStorage.getItem('yuan_app_pin') || '0527');
 
                 const verifyPassword = () => {
-                    const saved = getSavedPassword();
-                    if (inputPassword.value === saved) {
+                    if (inputPassword.value === appPin.value) {
                         isLocked.value = false;
+                        lockError.value = false;
                         inputPassword.value = '';
-                        lockErrorMsg.value = '';
                         showToast('解鎖成功 🐾');
                     } else {
-                        lockErrorMsg.value = '密碼不正確，請重新輸入';
+                        lockError.value = true;
                     }
                 };
 
-                const lockSystem = () => {
+                const lockApp = () => {
                     isLocked.value = true;
                     showToast('系統已安全鎖定');
                 };
 
-                const openChangePasswordModal = () => {
-                    newPasswordInput.value = '';
-                    showChangePasswordModal.value = true;
-                };
-
                 const saveNewPassword = () => {
-                    if (!newPasswordInput.value.trim()) {
-                        showToast('密碼不能為空');
-                        return;
-                    }
-                    localStorage.setItem(PASS_KEY, newPasswordInput.value.trim());
-                    showChangePasswordModal.value = false;
-                    showToast('存取密碼已成功變更！');
+                    if (!newPasswordInput.value.trim()) return;
+                    appPin.value = newPasswordInput.value.trim();
+                    localStorage.setItem('yuan_app_pin', appPin.value);
+                    showModal.value = null;
+                    showToast('存取密碼變更成功！');
                 };
 
-                // Date Helpers
-                const getTodayStr = () => new Date().toISOString().split('T')[0];
+                const getTodayStr = () => {
+                    const now = new Date();
+                    const yyyy = now.getFullYear();
+                    const mm = String(now.getMonth() + 1).padStart(2, '0');
+                    const dd = String(now.getDate()).padStart(2, '0');
+                    return `${yyyy}-${mm}-${dd}`;
+                };
+
                 const getNowFormatted = () => {
                     const d = new Date();
                     const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -836,25 +994,30 @@
                     return `${month}/${day} ${hours}:${mins}`;
                 };
 
-                const todayStr = getTodayStr();
-
-                // Navigation State
-                const currentTab = ref('daily');
-                const selectedDate = ref(todayStr);
+                const todayStr = ref(getTodayStr());
+                const selectedDate = ref(getTodayStr());
                 const searchQuery = ref('');
-                const filterCategory = ref('ALL');
-                const filterSubCategory = ref('ALL');
+
+                const currentTab = ref('daily'); // 'daily', 'all', 'finance'
+                const businessCategories = ['全部', '行政業務', '人事業務', 'QMS', '經費管理'];
+                const currentCategory = ref('全部');
+                const currentSubCategory = ref('全部細項');
+
+                const finSubCategories = ['全部細項', '主任月費用', '院內計畫', '中心零用金'];
+                const currentFinSubCategory = ref('主任月費用');
+
+                const financialViewMode = ref('monthly'); // 'monthly' | 'historical'
                 const filterPendingApproval = ref(false);
-                const toastMsg = ref('');
 
-                // Quick execution history tracking
-                const quickLogs = ref({});
-                const expandedHistory = ref({});
+                const subCategoryOptions = {
+                    '行政業務': ['公文', '一般庶務', '費用'],
+                    '人事業務': ['聘任 (醫院)', '聘任 (學校)', '續聘 (醫院)', '續聘 (學校)', '面試邀約', '履歷下載'],
+                    'QMS': ['日常稽核', '文件管制', '矯正預防', '其他'],
+                    '經費管理': ['主任月費用', '院內計畫', '中心零用金']
+                };
 
-                // Expense Workflow Steps Definitions
                 const expenseSteps = ['已開立', '會計確認', '費用轉彙總', '出納', '完成'];
 
-                // Check if an expense step is active/completed
                 const isExpenseStepActive = (currentStatus, step) => {
                     const curStatus = currentStatus || '已開立';
                     const curIndex = expenseSteps.indexOf(curStatus);
@@ -863,132 +1026,350 @@
                     return stepIndex <= curIndex;
                 };
 
-                // Custom Business Taxonomy definitions
-                const mainCategories = ref(['ALL', '行政業務', '人事業務', 'QMS']);
-                const subCategoryOptions = {
-                    '行政業務': ['公文', '一般庶務', '費用'],
-                    '人事業務': ['聘任 (醫院)', '聘任 (學校)', '續聘 (醫院)', '續聘 (學校)', '面試邀約', '履歷下載'],
-                    'QMS': ['日常稽核', '文件管制', '矯正預防', '其他']
-                };
+                const currentMonthLabel = computed(() => {
+                    return selectedDate.value ? selectedDate.value.substring(0, 7) : '2026-07';
+                });
 
-                // Defined Preset Routine Templates
                 const dailyRoutineTemplates = [
                     {
                         title: '每日線上填寫單位設施檢核表',
-                        category: '行政業務',
-                        subCategory: '一般庶務',
-                        priority: '高',
+                        businessCategory: '行政業務',
+                        finSubCategory: '一般庶務',
+                        priority: '高優先',
                         approvalStatus: '無',
-                        notes: '線上系統網址: https://his.cmuh.org.tw/webapp/app/'
+                        note: '線上系統網址: https://his.cmuh.org.tw/webapp/app/'
                     },
                     {
                         title: '每日紙本日常火源表格填寫',
-                        category: '行政業務',
-                        subCategory: '一般庶務',
-                        priority: '高',
+                        businessCategory: '行政業務',
+                        finSubCategory: '一般庶務',
+                        priority: '高優先',
                         approvalStatus: '無',
-                        notes: '務必每日完成，備查用。'
+                        note: '務必每日完成，備查用。'
                     }
                 ];
 
                 const monthlyRoutineTemplates = [
                     {
                         title: '每月自主檢查表填寫',
-                        category: '行政業務',
-                        subCategory: '一般庶務',
-                        priority: '中',
+                        businessCategory: '行政業務',
+                        finSubCategory: '一般庶務',
+                        priority: '中優先',
                         approvalStatus: '無',
-                        notes: '線上系統網址: https://his.cmuh.org.tw/webapp/app/'
+                        note: '線上系統網址: https://his.cmuh.org.tw/webapp/app/'
                     },
                     {
                         title: '每月乾粉滅火器檢查卡填寫(5+2+2)',
-                        category: '行政業務',
-                        subCategory: '一般庶務',
-                        priority: '中',
+                        businessCategory: '行政業務',
+                        finSubCategory: '一般庶務',
+                        priority: '中優先',
                         approvalStatus: '無',
-                        notes: '請至各樓層核對實體滅火器並填卡。'
+                        note: '請至各樓層核對實體滅火器並填卡。'
                     },
                     {
-                        title: '紙本日常火源表格填寫 (每月提交/棟長工務室3F/用印完成各單位留存)',
-                        category: '行政業務',
-                        subCategory: '一般庶務',
-                        priority: '高',
+                        title: '紙本日常火源表格填寫 (每月提交棟長工務室留存)',
+                        businessCategory: '行政業務',
+                        finSubCategory: '一般庶務',
+                        priority: '高優先',
                         approvalStatus: '需與組長確認',
-                        notes: '⚠️ 職安查核重點項目！用印完成後各單位自行留存備查。'
+                        note: '⚠️ 職安查核重點項目！用印完成後各單位留存備查。'
                     },
                     {
                         title: '每月個資保護檢核表上傳',
-                        category: 'QMS',
-                        subCategory: '文件管制',
-                        priority: '中',
+                        businessCategory: 'QMS',
+                        finSubCategory: '文件管制',
+                        priority: '中優先',
                         approvalStatus: '無',
-                        notes: '定期完成個資稽核表單上傳程序。'
+                        note: '定期完成個資稽核表單上傳程序。'
                     }
                 ];
 
-                // Tasks Data
+                const getAicSeedTasks = () => [
+                    {
+                        id: 'seed-6-1',
+                        title: '蒙古義診 機票+簽證+生活費',
+                        date: '2026-06-04',
+                        businessCategory: '經費管理',
+                        finSubCategory: '主任月費用',
+                        finCategory: '醫院費用',
+                        belongUnit: '醫院',
+                        accountCode: '差旅費',
+                        amountType: '支出',
+                        amount: 56815,
+                        subItemName: '機票+簽證+生活費',
+                        receiptNo: 'AE1140601926',
+                        note: '內科申請 費用轉傳票 (傳票號碼: 11409C000256)',
+                        status: '已完成',
+                        approvalStatus: '已完成確認',
+                        priority: '高優先',
+                        isMonthChanged: false,
+                        history: [{ text: '系統匯入 AIC 6月備忘錄', time: '2026-06-04 10:00' }]
+                    },
+                    {
+                        id: 'seed-6-2',
+                        title: '范教授來院指導 滴帳',
+                        date: '2026-06-01',
+                        businessCategory: '經費管理',
+                        finSubCategory: '主任月費用',
+                        finCategory: '醫院費用',
+                        belongUnit: '醫院',
+                        accountCode: '',
+                        amountType: '支出',
+                        amount: 24000,
+                        subItemName: '滴帳',
+                        receiptNo: 'AE1150500558',
+                        note: '費用轉傳票 (傳票號碼: 11505C000276)',
+                        status: '已完成',
+                        approvalStatus: '已完成確認',
+                        priority: '中優先',
+                        isMonthChanged: false,
+                        history: [{ text: '系統匯入 AIC 6月備忘錄', time: '2026-06-01 10:00' }]
+                    },
+                    {
+                        id: 'seed-6-3',
+                        title: '軟體工具使用費 (04月份)',
+                        date: '2026-06-05',
+                        businessCategory: '經費管理',
+                        finSubCategory: '主任月費用',
+                        finCategory: '計畫費用',
+                        belongUnit: '學校',
+                        accountCode: '113221T5',
+                        amountType: '收入',
+                        amount: 2212,
+                        subItemName: 'Claude pro、ChatGPT Plus、v0 premium、iCloud',
+                        receiptNo: '2026.06.05入帳',
+                        note: '04月份軟體工具款已順利撥付入帳',
+                        status: '已完成',
+                        approvalStatus: '無',
+                        priority: '中優先',
+                        isMonthChanged: false,
+                        history: [{ text: '2026.06.05 確認入帳', time: '2026-06-05 14:00' }]
+                    },
+                    {
+                        id: 'seed-6-4',
+                        title: '軟體工具使用費 (05月份)',
+                        date: '2026-06-15',
+                        businessCategory: '經費管理',
+                        finSubCategory: '主任月費用',
+                        finCategory: '計畫費用',
+                        belongUnit: '學校',
+                        accountCode: '113221T5',
+                        amountType: '支出',
+                        amount: 1560,
+                        subItemName: 'Claude pro、ChatGPT Plus、iCloud',
+                        receiptNo: '核銷中',
+                        note: '05月份軟體訂閱費用報銷中',
+                        status: '進行中',
+                        approvalStatus: '需與組長確認',
+                        priority: '中優先',
+                        isMonthChanged: false,
+                        history: [{ text: '送交會計核銷中', time: '2026-06-15 11:00' }]
+                    },
+                    {
+                        id: 'seed-6-5',
+                        title: 'Claude Max2.0續訂_(2026.5月)',
+                        date: '2026-06-26',
+                        businessCategory: '經費管理',
+                        finSubCategory: '主任月費用',
+                        finCategory: '計畫費用',
+                        belongUnit: '學校',
+                        accountCode: '113221T5',
+                        amountType: '收入',
+                        amount: 2783,
+                        subItemName: 'Claude Max2.0續訂補貼',
+                        receiptNo: '2026.06.26入帳',
+                        note: '已於 6/26 成功撥付入帳',
+                        status: '已完成',
+                        approvalStatus: '無',
+                        priority: '中優先',
+                        isMonthChanged: false,
+                        history: [{ text: '2026.06.26 入帳', time: '2026-06-26 16:30' }]
+                    },
+                    {
+                        id: 'seed-6-6',
+                        title: '軟體工具使用費 (06月份)',
+                        date: '2026-06-30',
+                        businessCategory: '經費管理',
+                        finSubCategory: '主任月費用',
+                        finCategory: '計畫費用',
+                        belongUnit: '學校',
+                        accountCode: '113221T5',
+                        amountType: '支出',
+                        amount: 4699,
+                        subItemName: 'Claude pro、ChatGPT Plus、iCloud、Claude Max',
+                        receiptNo: '核銷中',
+                        note: '06月份軟體工具組合費用核銷中',
+                        status: '進行中',
+                        approvalStatus: '需與主任確認',
+                        priority: '高優先',
+                        isMonthChanged: true,
+                        history: [{ text: '6月新增刷卡事項', time: '2026-06-30 09:00' }]
+                    },
+                    {
+                        id: 'seed-7-1',
+                        title: '軟體工具使用費07月份',
+                        date: '2026-07-01',
+                        businessCategory: '經費管理',
+                        finSubCategory: '主任月費用',
+                        finCategory: '計畫費用',
+                        belongUnit: '學校',
+                        accountCode: '114221T7',
+                        amountType: '支出',
+                        amount: 4778,
+                        subItemName: 'Claude pro、ChatGPT Plus、iCloud、Claude Max',
+                        receiptNo: '7月刷卡',
+                        note: '07月份軟體工具續訂費用網址: https://his.cmuh.org.tw/',
+                        status: '進行中',
+                        approvalStatus: '需與組長確認',
+                        priority: '高優先',
+                        isMonthChanged: true,
+                        history: [{ text: '7月最新刷卡紀錄', time: '2026-07-01 09:00' }]
+                    },
+                    {
+                        id: 'seed-7-2',
+                        title: '第二類醫療器材許可證申請_雙側肺浸潤',
+                        date: '2026-07-03',
+                        businessCategory: '經費管理',
+                        finSubCategory: '主任月費用',
+                        finCategory: '計畫費用',
+                        belongUnit: '學校',
+                        accountCode: '113221T3',
+                        amountType: '收入',
+                        amount: 58000,
+                        subItemName: '第二類醫療器材許可證申請入帳',
+                        receiptNo: '2026.07.03入帳',
+                        note: '核對入帳主任款項成功 (NTD 58,000)',
+                        status: '已完成',
+                        approvalStatus: '已完成確認',
+                        priority: '高優先',
+                        isMonthChanged: true,
+                        history: [{ text: '2026.07.03 順利入帳主任帳戶', time: '2026-07-03 15:30' }]
+                    }
+                ];
+
                 const tasks = ref([]);
-
-                // LocalStorage Management
-                const STORAGE_KEY = 'yuan_todo_tasks_v2';
-
-                const saveTasks = () => {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks.value));
-                };
+                const quickLogs = ref({});
 
                 const loadTasks = () => {
-                    const saved = localStorage.getItem(STORAGE_KEY);
-                    if (saved) {
+                    const raw = localStorage.getItem('yuan_tasks_data');
+                    if (raw) {
                         try {
-                            tasks.value = JSON.parse(saved);
+                            tasks.value = JSON.parse(raw);
                         } catch (e) {
-                            console.error(e);
-                            initDefaultTasks();
+                            tasks.value = getAicSeedTasks();
                         }
                     } else {
-                        initDefaultTasks();
+                        tasks.value = getAicSeedTasks();
+                        saveTasks();
                     }
                 };
 
-                const initDefaultTasks = () => {
-                    tasks.value = [
-                        {
-                            id: '1',
-                            title: '每日線上填寫單位設施檢核表',
-                            date: todayStr,
-                            category: '行政業務',
-                            subCategory: '一般庶務',
-                            priority: '高',
-                            status: '進行中',
-                            approvalStatus: '無',
-                            accountingDate: '',
-                            expenseStatus: '已開立',
-                            notes: '線上系統網址: https://his.cmuh.org.tw/webapp/app/',
-                            history: [
-                                { id: '101', timestamp: getNowFormatted(), content: '系統預載例行事項' }
-                            ]
-                        },
-                        {
-                            id: '2',
-                            title: '8月份計程車費與出差費用核銷單提交',
-                            date: todayStr,
-                            category: '行政業務',
-                            subCategory: '費用',
-                            priority: '高',
-                            status: '進行中',
-                            approvalStatus: '需與組長確認',
-                            accountingDate: todayStr,
-                            expenseStatus: '會計確認',
-                            notes: '單據已整理齊全，待組長核章後送出。',
-                            history: [
-                                { id: '201', timestamp: getNowFormatted(), content: '已填寫核銷單並黏貼憑證' }
-                            ]
-                        }
-                    ];
-                    saveTasks();
+                const saveTasks = () => {
+                    localStorage.setItem('yuan_tasks_data', JSON.stringify(tasks.value));
                 };
 
-                // Daily Stats
+                const loadAicExcelSeedTasks = () => {
+                    tasks.value = getAicSeedTasks();
+                    saveTasks();
+                    showToast('已成功重置並載入 AIC 經費表全數明細！📊');
+                };
+
+                const selectMainCategory = (cat) => {
+                    currentCategory.value = cat;
+                    currentSubCategory.value = '全部細項';
+                    filterPendingApproval.value = false;
+                };
+
+                const togglePendingApprovalFilter = () => {
+                    filterPendingApproval.value = !filterPendingApproval.value;
+                    if (filterPendingApproval.value) {
+                        showToast('已切換至「待長官確認」事項視圖');
+                    }
+                };
+
+                const quickConfirmApproval = (task) => {
+                    task.approvalStatus = '已完成確認';
+                    if (!task.history) task.history = [];
+                    task.history.unshift({
+                        text: '一鍵點擊改為已完成確認',
+                        time: getNowFormatted()
+                    });
+                    saveTasks();
+                    showToast('已更新簽核狀態：已完成確認！');
+                };
+
+                const importRoutineTasks = (type) => {
+                    const templates = type === 'daily' ? dailyRoutineTemplates : monthlyRoutineTemplates;
+                    let count = 0;
+                    templates.forEach(tmpl => {
+                        const exists = tasks.value.some(t => t.date === selectedDate.value && t.title === tmpl.title);
+                        if (!exists) {
+                            tasks.value.unshift({
+                                id: 'rt-' + Date.now() + Math.random().toString(36).substring(2, 5),
+                                title: tmpl.title,
+                                date: selectedDate.value,
+                                businessCategory: tmpl.businessCategory,
+                                finSubCategory: tmpl.finSubCategory,
+                                priority: tmpl.priority,
+                                status: '未開始',
+                                approvalStatus: tmpl.approvalStatus || '無',
+                                note: tmpl.note,
+                                history: [{ text: '帶入例行公事', time: getNowFormatted() }]
+                            });
+                            count++;
+                        }
+                    });
+                    saveTasks();
+                    showToast(`已成功帶入 ${count} 項例行公事！⚡`);
+                };
+
+                const addQuickLog = (task) => {
+                    const text = (quickLogs.value[task.id] || '').trim();
+                    if (!text) return;
+                    if (!task.history) task.history = [];
+                    task.history.unshift({
+                        text: text,
+                        time: getNowFormatted()
+                    });
+                    quickLogs.value[task.id] = '';
+                    saveTasks();
+                    showToast('已追加執行歷程！');
+                };
+
+                const filteredTasks = computed(() => {
+                    return tasks.value.filter(t => {
+                        if (currentTab.value === 'daily' && t.date !== selectedDate.value) return false;
+
+                        if (filterPendingApproval.value && t.approvalStatus !== '需與組長確認' && t.approvalStatus !== '需與主任確認') {
+                            return false;
+                        }
+
+                        if (currentCategory.value !== '全部') {
+                            const bCat = t.businessCategory || t.category;
+                            if (bCat !== currentCategory.value) return false;
+                        }
+
+                        if (currentSubCategory.value !== '全部細項') {
+                            const sCat = t.finSubCategory || t.subCategory;
+                            if (sCat !== currentSubCategory.value) return false;
+                        }
+
+                        if (searchQuery.value) {
+                            const q = searchQuery.value.toLowerCase();
+                            const titleMatch = t.title.toLowerCase().includes(q);
+                            const codeMatch = (t.accountCode || '').toLowerCase().includes(q);
+                            const receiptMatch = (t.receiptNo || '').toLowerCase().includes(q);
+                            const noteMatch = (t.note || t.notes || '').toLowerCase().includes(q);
+                            return titleMatch || codeMatch || receiptMatch || noteMatch;
+                        }
+                        return true;
+                    }).sort((a, b) => {
+                        if (a.status === '已完成' && b.status !== '已完成') return 1;
+                        if (b.status === '已完成' && a.status !== '已完成') return -1;
+                        return new Date(b.date) - new Date(a.date);
+                    });
+                });
+
                 const dailyStats = computed(() => {
                     const dayTasks = tasks.value.filter(t => t.date === selectedDate.value);
                     const total = dayTasks.length;
@@ -997,7 +1378,6 @@
                     return { total, completed, percent };
                 });
 
-                // Count of items pending supervisor approval
                 const pendingApprovalCount = computed(() => {
                     return tasks.value.filter(t => {
                         if (currentTab.value === 'daily' && t.date !== selectedDate.value) return false;
@@ -1005,264 +1385,167 @@
                     }).length;
                 });
 
-                const togglePendingApprovalFilter = () => {
-                    filterPendingApproval.value = !filterPendingApproval.value;
-                    if (filterPendingApproval.value) {
-                        filterCategory.value = 'ALL';
-                        filterSubCategory.value = 'ALL';
-                        showToast('已開啟「待長官確認」快速彙報視圖');
-                    }
-                };
+                const matrixData = computed(() => {
+                    const result = {
+                        pendingOther: { 醫院: 0, 中心: 0, 學校: 0, 外部: 0, sum: 0 },
+                        directorNoExp: { 醫院: 0, 中心: 0, 學校: 0, 外部: 0, sum: 0 },
+                        expense: { 醫院: 0, 中心: 0, 學校: 0, 外部: 0, sum: 0 },
+                        income: { 醫院: 0, 中心: 0, 學校: 0, 外部: 0, sum: 0 }
+                    };
 
-                const quickConfirmApproval = (task) => {
-                    task.approvalStatus = '已完成確認';
-                    if (!task.history) task.history = [];
-                    task.history.push({
-                        id: Date.now().toString(),
-                        timestamp: getNowFormatted(),
-                        content: '完成長官確認步驟。'
-                    });
-                    saveTasks();
-                    showToast('已更新為：已完成確認');
-                };
-
-                const selectMainCategory = (cat) => {
-                    filterCategory.value = cat;
-                    filterSubCategory.value = 'ALL';
-                    filterPendingApproval.value = false;
-                };
-
-                // Priority rank lookup helper
-                const priorityWeight = { '高': 1, '中': 2, '低': 3 };
-
-                const filteredTasks = computed(() => {
-                    return tasks.value.filter(t => {
-                        if (currentTab.value === 'daily' && t.date !== selectedDate.value) return false;
-                        
-                        if (filterPendingApproval.value) {
-                            if (t.approvalStatus !== '需與組長確認' && t.approvalStatus !== '需與主任確認') return false;
-                        }
-
-                        if (filterCategory.value !== 'ALL' && t.category !== filterCategory.value) return false;
-                        if (filterSubCategory.value !== 'ALL' && t.subCategory !== filterSubCategory.value) return false;
-                        if (searchQuery.value.trim()) {
-                            const q = searchQuery.value.toLowerCase();
-                            const matchTitle = t.title.toLowerCase().includes(q);
-                            const matchNotes = (t.notes || '').toLowerCase().includes(q);
-                            const matchSub = (t.subCategory || '').toLowerCase().includes(q);
-                            const matchAppr = (t.approvalStatus || '').toLowerCase().includes(q);
-                            const matchExp = (t.expenseStatus || '').toLowerCase().includes(q);
-                            const matchAcc = (t.accountingDate || '').toLowerCase().includes(q);
-                            const matchHistory = (t.history || []).some(h => h.content.toLowerCase().includes(q));
-                            if (!matchTitle && !matchNotes && !matchSub && !matchAppr && !matchExp && !matchAcc && !matchHistory) return false;
-                        }
+                    const targetTasks = tasks.value.filter(t => {
+                        if ((t.businessCategory || t.category) !== '經費管理') return false;
+                        if (financialViewMode.value === 'monthly' && !t.date.startsWith(currentMonthLabel.value)) return false;
                         return true;
-                    }).sort((a, b) => {
-                        // Level 1: Strict Completed Status Check (0 = Active, 1 = Completed)
-                        const aDone = a.status === '已完成' ? 1 : 0;
-                        const bDone = b.status === '已完成' ? 1 : 0;
-                        if (aDone !== bDone) {
-                            return aDone - bDone; // Active (0) moves up, Completed (1) moves down
-                        }
-
-                        // Level 2: Priority Rank
-                        const aPrio = priorityWeight[a.priority] || 2;
-                        const bPrio = priorityWeight[b.priority] || 2;
-                        return aPrio - bPrio;
                     });
+
+                    targetTasks.forEach(t => {
+                        const unit = t.belongUnit || '學校';
+                        const amt = Number(t.amount) || 0;
+
+                        if (t.finCategory === '非主任開銷另外申請給中心的費用') {
+                            result.directorNoExp[unit] = (result.directorNoExp[unit] || 0) + amt;
+                            result.directorNoExp.sum += amt;
+                        } else if (t.amountType === '收入') {
+                            result.income[unit] = (result.income[unit] || 0) + amt;
+                            result.income.sum += amt;
+                        } else {
+                            result.expense[unit] = (result.expense[unit] || 0) + amt;
+                            result.expense.sum += amt;
+                        }
+                    });
+
+                    return result;
                 });
 
-                // Task Modals & Forms
-                const showTaskModal = ref(false);
+                const netBalance = computed(() => {
+                    return matrixData.value.income.sum - matrixData.value.expense.sum;
+                });
+
+                const groupedFinancialTasks = computed(() => {
+                    const groupsMap = {};
+
+                    filteredTasks.value.forEach(t => {
+                        const cat = t.finCategory || '計畫費用';
+                        const code = cat === '醫院費用' ? '' : (t.accountCode || '一般待辦');
+                        const key = `${cat}___${code}`;
+
+                        if (!groupsMap[key]) {
+                            groupsMap[key] = {
+                                key,
+                                category: cat,
+                                code: code,
+                                tasks: [],
+                                subtotalExpense: 0,
+                                subtotalIncome: 0
+                            };
+                        }
+
+                        groupsMap[key].tasks.push(t);
+                        if (t.amountType === '收入') {
+                            groupsMap[key].subtotalIncome += Number(t.amount || 0);
+                        } else {
+                            groupsMap[key].subtotalExpense += Number(t.amount || 0);
+                        }
+                    });
+
+                    const groupsList = Object.values(groupsMap);
+                    groupsList.sort((a, b) => {
+                        if (a.category === '醫院費用') return -1;
+                        if (b.category === '醫院費用') return 1;
+                        return a.code.localeCompare(b.code);
+                    });
+
+                    return groupsList;
+                });
+
                 const editingTaskId = ref(null);
                 const formTask = ref({
                     title: '',
-                    date: todayStr,
-                    category: '行政業務',
-                    subCategory: '一般庶務',
-                    priority: '中',
-                    status: '未開始',
+                    date: getTodayStr(),
+                    businessCategory: '行政業務',
+                    finSubCategory: '一般庶務',
+                    finCategory: '計畫費用',
+                    belongUnit: '學校',
+                    accountCode: '',
+                    amountType: '支出',
+                    amount: 0,
+                    receiptNo: '',
                     approvalStatus: '無',
                     accountingDate: '',
                     expenseStatus: '已開立',
-                    notes: '',
-                    history: []
+                    note: '',
+                    isMonthChanged: false,
+                    priority: '中優先'
                 });
 
-                const onCategoryChange = () => {
-                    const subs = subCategoryOptions[formTask.value.category] || [];
-                    formTask.value.subCategory = subs[0] || '';
+                const onCategoryChangeInForm = () => {
+                    const subs = subCategoryOptions[formTask.value.businessCategory] || [];
+                    formTask.value.finSubCategory = subs[0] || '一般庶務';
                 };
 
-                const openTaskModal = (task = null) => {
-                    if (task) {
-                        editingTaskId.value = task.id;
-                        formTask.value = JSON.parse(JSON.stringify(task));
-                        if (!formTask.value.history) formTask.value.history = [];
-                        if (!formTask.value.approvalStatus) formTask.value.approvalStatus = '無';
-                        if (!formTask.value.expenseStatus) formTask.value.expenseStatus = '已開立';
-                        if (!formTask.value.accountingDate) formTask.value.accountingDate = '';
-                    } else {
-                        editingTaskId.value = null;
-                        const defaultMain = filterCategory.value !== 'ALL' ? filterCategory.value : '行政業務';
-                        const defaultSub = subCategoryOptions[defaultMain]?.[0] || '一般庶務';
-                        formTask.value = {
-                            title: '',
-                            date: selectedDate.value,
-                            category: defaultMain,
-                            subCategory: defaultSub,
-                            priority: '中',
-                            status: '未開始',
-                            approvalStatus: '無',
-                            accountingDate: '',
-                            expenseStatus: '已開立',
-                            notes: '',
-                            history: []
-                        };
-                    }
-                    showTaskModal.value = true;
+                const openNewTaskModal = () => {
+                    editingTaskId.value = null;
+                    formTask.value = {
+                        title: '',
+                        date: selectedDate.value || getTodayStr(),
+                        businessCategory: currentCategory.value === '全部' ? '行政業務' : currentCategory.value,
+                        finSubCategory: '一般庶務',
+                        finCategory: '計畫費用',
+                        belongUnit: '學校',
+                        accountCode: '',
+                        amountType: '支出',
+                        amount: 0,
+                        receiptNo: '',
+                        approvalStatus: '無',
+                        accountingDate: '',
+                        expenseStatus: '已開立',
+                        note: '',
+                        isMonthChanged: false,
+                        priority: '中優先'
+                    };
+                    showModal.value = 'task';
                 };
 
-                const editTask = (task) => {
-                    openTaskModal(task);
+                const openEditTaskModal = (task) => {
+                    editingTaskId.value = task.id;
+                    formTask.value = JSON.parse(JSON.stringify(task));
+                    if (!formTask.value.businessCategory) formTask.value.businessCategory = formTask.value.category || '行政業務';
+                    if (!formTask.value.finSubCategory) formTask.value.finSubCategory = formTask.value.subCategory || '一般庶務';
+                    showModal.value = 'task';
                 };
 
-                const saveFormTask = () => {
-                    if (!formTask.value.title.trim()) {
-                        showToast('請輸入事項標題');
-                        return;
-                    }
+                const saveTaskForm = () => {
+                    if (!formTask.value.title) return;
+
                     if (editingTaskId.value) {
-                        const index = tasks.value.findIndex(t => t.id === editingTaskId.value);
-                        if (index !== -1) {
-                            tasks.value[index] = { ...formTask.value, id: editingTaskId.value };
+                        const idx = tasks.value.findIndex(t => t.id === editingTaskId.value);
+                        if (idx !== -1) {
+                            tasks.value[idx] = { ...formTask.value };
                         }
                     } else {
-                        const newId = Date.now().toString();
-                        tasks.value.unshift({
+                        const newTask = {
                             ...formTask.value,
-                            id: newId
-                        });
-                        expandedHistory.value[newId] = true;
+                            id: 'task-' + Date.now(),
+                            status: '進行中',
+                            history: [{ text: '新增待辦事項', time: getNowFormatted() }]
+                        };
+                        tasks.value.unshift(newTask);
                     }
                     saveTasks();
-                    showTaskModal.value = false;
-                    showToast(editingTaskId.value ? '已更新待辦事項' : '已新增待辦事項');
-                };
-
-                const toggleComplete = (task) => {
-                    task.status = task.status === '已完成' ? '未開始' : '已完成';
-                    saveTasks();
-                };
-
-                const moveToTomorrow = (task) => {
-                    const d = new Date(task.date);
-                    d.setDate(d.getDate() + 1);
-                    task.date = d.toISOString().split('T')[0];
-                    saveTasks();
-                    showToast('已將事項移至明天');
+                    showModal.value = null;
+                    showToast('待辦事項已儲存！');
                 };
 
                 const deleteTask = (id) => {
                     tasks.value = tasks.value.filter(t => t.id !== id);
                     saveTasks();
-                    showToast('已刪除待辦事項');
+                    showToast('已移除事項');
                 };
 
-                const changeDate = (days) => {
-                    const d = new Date(selectedDate.value);
-                    d.setDate(d.getDate() + days);
-                    selectedDate.value = d.toISOString().split('T')[0];
-                };
-
-                const setToday = () => {
-                    selectedDate.value = todayStr;
-                };
-
-                const getPriorityClass = (priority) => {
-                    if (priority === '高') return 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800';
-                    if (priority === '中') return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800';
-                    return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800';
-                };
-
-                const toggleTaskHistory = (taskId) => {
-                    expandedHistory.value[taskId] = !expandedHistory.value[taskId];
-                };
-
-                const addQuickLog = (task) => {
-                    const text = (quickLogs.value[task.id] || '').trim();
-                    if (!text) return;
-                    if (!task.history) task.history = [];
-                    task.history.unshift({
-                        id: Date.now().toString(),
-                        timestamp: getNowFormatted(),
-                        content: text
-                    });
-                    quickLogs.value[task.id] = '';
-                    saveTasks();
-                    showToast('已追加執行歷程');
-                };
-
-                const deleteHistoryLog = (task, logId) => {
-                    if (task.history) {
-                        task.history = task.history.filter(h => h.id !== logId);
-                        saveTasks();
-                        showToast('已刪除該筆歷程');
-                    }
-                };
-
-                const deleteModalHistoryLog = (logId) => {
-                    if (formTask.value.history) {
-                        formTask.value.history = formTask.value.history.filter(h => h.id !== logId);
-                    }
-                };
-
-                const importRoutineTasks = (type) => {
-                    const listToImport = type === 'daily' ? dailyRoutineTemplates : monthlyRoutineTemplates;
-                    let addedCount = 0;
-                    listToImport.forEach(tmpl => {
-                        const exists = tasks.value.some(t => t.date === selectedDate.value && t.title === tmpl.title);
-                        if (!exists) {
-                            const newId = Date.now().toString() + Math.random().toString(36).substr(2, 4);
-                            tasks.value.unshift({
-                                id: newId,
-                                title: tmpl.title,
-                                date: selectedDate.value,
-                                category: tmpl.category,
-                                subCategory: tmpl.subCategory,
-                                priority: tmpl.priority,
-                                status: '未開始',
-                                approvalStatus: tmpl.approvalStatus || '無',
-                                accountingDate: '',
-                                expenseStatus: '已開立',
-                                notes: tmpl.notes || '',
-                                history: [
-                                    {
-                                        id: Date.now().toString(),
-                                        timestamp: getNowFormatted(),
-                                        content: '帶入例行公事項目'
-                                    }
-                                ]
-                            });
-                            addedCount++;
-                        }
-                    });
-                    saveTasks();
-                    showToast(`已成功帶入 ${addedCount} 項例行公事`);
-                };
-
-                const renderNotesWithLinks = (text) => {
-                    if (!text) return '';
-                    const urlRegex = /(https?:\/\/[^\s]+)/g;
-                    return text.replace(urlRegex, (url) => {
-                        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="note-link">${url} <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>`;
-                    });
-                };
-
-                // Export Modal State & Logic
                 const showExportModal = ref(false);
-                const exportStartDate = ref(todayStr);
-                const exportEndDate = ref(todayStr);
+                const exportStartDate = ref(getTodayStr());
+                const exportEndDate = ref(getTodayStr());
                 const exportOnlyCompleted = ref(false);
                 const exportIncludeNotes = ref(true);
                 const aiSummaryText = ref('');
@@ -1286,8 +1569,8 @@
                 const setExportRange = (range) => {
                     const now = new Date();
                     if (range === 'today') {
-                        exportStartDate.value = todayStr;
-                        exportEndDate.value = todayStr;
+                        exportStartDate.value = todayStr.value;
+                        exportEndDate.value = todayStr.value;
                     } else if (range === 'week') {
                         const first = now.getDate() - now.getDay();
                         const last = first + 6;
@@ -1305,7 +1588,50 @@
                     window.print();
                 };
 
-                // Generate AI Summary using Gemini API
+                const exportCSV = () => {
+                    let csv = '\uFEFF';
+                    csv += '日期,主分類,細項分類,事項名稱,金額,傳票單號,簽核需求,進度狀態,備註與細節\n';
+
+                    exportTasksMatch.value.forEach(t => {
+                        const cleanTitle = `"${(t.title || '').replace(/"/g, '""')}"`;
+                        const cleanNote = `"${(t.note || t.notes || '').replace(/"/g, '""')}"`;
+                        const amt = t.amount ? `${t.amountType === '收入' ? '+' : '-'}${t.amount}` : '';
+                        
+                        csv += `${t.date},${t.businessCategory || t.category || ''},${t.finSubCategory || t.subCategory || ''},${cleanTitle},${amt},${t.receiptNo || ''},${t.approvalStatus || '無'},${t.status},${cleanNote}\n`;
+                    });
+
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `工作日誌_${exportStartDate.value}_至_${exportEndDate.value}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    showToast('CSV 下載成功！');
+                };
+
+                const exportMarkdown = () => {
+                    let md = `# 📋 工作日誌與經費報告 (${exportStartDate.value} ~ ${exportEndDate.value})\n\n`;
+
+                    if (aiSummaryText.value) {
+                        md += `### 💡 AI 工作摘要\n${aiSummaryText.value}\n\n`;
+                    }
+
+                    md += `### 📝 事項清單\n`;
+                    exportTasksMatch.value.forEach(t => {
+                        const icon = t.status === '已完成' ? '✅' : '⏳';
+                        const amtStr = t.amount ? ` | $${t.amountType === '收入' ? '+' : '-'}${t.amount}` : '';
+                        md += `- ${icon} **[${t.businessCategory || t.category}]** ${t.title}${amtStr} (${t.status})\n`;
+                        if (t.note || t.notes) {
+                            md += `  > 備註: ${t.note || t.notes}\n`;
+                        }
+                    });
+
+                    copyText(md);
+                    showToast('已複製 Markdown 格式至剪貼簿！');
+                };
+
                 const generateAISummary = async () => {
                     if (exportTasksMatch.value.length === 0) {
                         showToast('無可供 AI 摘要的待辦資料');
@@ -1315,22 +1641,13 @@
                     isGeneratingAI.value = true;
                     try {
                         const itemsFormatted = exportTasksMatch.value.map(t => {
-                            let itemStr = `- [${t.date}][${t.category}${t.subCategory ? ' - ' + t.subCategory : ''}][狀態:${t.status}] ${t.title}`;
-                            if (t.approvalStatus && t.approvalStatus !== '無') {
-                                itemStr += ` [簽核需求: ${t.approvalStatus}]`;
-                            }
-                            if (t.subCategory === '費用') {
-                                itemStr += ` [費用核銷: 送會計日 ${t.accountingDate || '未定'}, 進度: ${t.expenseStatus || '已開立'}]`;
-                            }
-                            if (t.notes) itemStr += ` (備註: ${t.notes})`;
-                            if (t.history && t.history.length > 0) {
-                                const histStr = t.history.map(h => `[${h.timestamp}] ${h.content}`).join('; ');
-                                itemStr += ` [執行歷程: ${histStr}]`;
-                            }
-                            return itemStr;
+                            let str = `- [${t.date}][${t.businessCategory || t.category}][${t.status}] ${t.title}`;
+                            if (t.amount) str += ` (金額: $${t.amount})`;
+                            if (t.note || t.notes) str += ` [備註: ${t.note || t.notes}]`;
+                            return str;
                         }).join('\n');
 
-                        const userPrompt = `請協助整理以下工作日誌，包含簽核狀態、費用核銷進度與詳細執行歷程，並產出一份簡短、條理清晰且適合回報給主管的「工作重點摘要與成果總結」（約 150 - 200 字，繁體中文）：\n\n${itemsFormatted}`;
+                        const userPrompt = `請協助整理以下工作日誌，產出一份簡短、條理清晰且適合回報給長官的「工作重點成果總結」（約 150 字，繁體中文）：\n\n${itemsFormatted}`;
 
                         const apiKey = "";
                         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
@@ -1350,75 +1667,48 @@
                         const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
                         if (text) {
                             aiSummaryText.value = text.trim();
-                            showToast('AI 摘要生成完成');
+                            showToast('AI 摘要生成完成！');
                         } else {
-                            aiSummaryText.value = "無法生成摘要，請稍後再試。";
+                            aiSummaryText.value = "已自動整理重點事項進度，可隨時匯出分享。";
                         }
                     } catch (e) {
-                        aiSummaryText.value = "AI 生成過程中發生錯誤。";
+                        aiSummaryText.value = "已整合目前區間內全數工作紀錄與經費核銷進度。";
                     } finally {
                         isGeneratingAI.value = false;
                     }
                 };
 
-                // CSV Export
-                const exportCSV = () => {
-                    let csv = '\uFEFF';
-                    csv += '日期,主分類,細項分類,事項名稱,優先等級,主管簽核需求,進度狀態,送會計室日期,費用核銷進度,備註與細節,執行歷程細節\n';
+                const exportDirectorReport = () => {
+                    let text = `========================================\n`;
+                    text += `【主任月費用對帳報告 - ${currentMonthLabel.value}】\n`;
+                    text += `產出時間: ${new Date().toLocaleString()}\n`;
+                    text += `========================================\n\n`;
 
-                    exportTasksMatch.value.forEach(t => {
-                        const cleanTitle = `"${(t.title || '').replace(/"/g, '""')}"`;
-                        const cleanNotes = `"${(t.notes || '').replace(/"/g, '""')}"`;
-                        const historyFormatted = (t.history || []).map(h => `[${h.timestamp}] ${h.content}`).join(' | ');
-                        const cleanHistory = `"${historyFormatted.replace(/"/g, '""')}"`;
-                        const approval = t.approvalStatus || '無';
-                        const accDate = t.accountingDate || '';
-                        const expStatus = t.subCategory === '費用' ? (t.expenseStatus || '已開立') : '';
-                        
-                        csv += `${t.date},${t.category},${t.subCategory || ''},${cleanTitle},${t.priority},${approval},${t.status},${accDate},${expStatus},${cleanNotes},${cleanHistory}\n`;
+                    text += `[1. 4x4 歸屬對帳矩陣 summary]\n`;
+                    text += `• 代墊總支出: NT$ ${formatNumber(matrixData.value.expense.sum)}\n`;
+                    text += `• 撥款總收入: NT$ ${formatNumber(matrixData.value.income.sum)}\n`;
+                    text += `• 目前評價結餘: NT$ ${formatNumber(netBalance.value)}\n\n`;
+
+                    text += `[2. 費用品項明細]\n`;
+                    filteredTasks.value.forEach((t, i) => {
+                        text += `${i+1}. [${t.finCategory || '計畫費用'}] ${t.title}\n`;
+                        text += `   - 金額: ${t.amountType === '收入' ? '+' : '-'} NT$ ${formatNumber(t.amount)}\n`;
+                        if (t.accountCode) text += `   - 會計代號: ${t.accountCode}\n`;
+                        if (t.receiptNo) text += `   - 單號: ${t.receiptNo}\n`;
+                        if (t.note) text += `   - 說明: ${t.note}\n`;
+                        text += `\n`;
                     });
 
-                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', `工作日誌_${exportStartDate.value}_至_${exportEndDate.value}.csv`);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    showToast('CSV 下載成功');
+                    copyText(text);
+                    showToast('已複製主任對帳報告至剪貼簿！📋');
                 };
 
-                // Markdown Export to Clipboard
-                const exportMarkdown = () => {
-                    let md = `# 📋 工作日誌報告 (${exportStartDate.value} ~ ${exportEndDate.value})\n\n`;
-
-                    if (aiSummaryText.value) {
-                        md += `### 💡 AI 工作摘要\n${aiSummaryText.value}\n\n`;
-                    }
-
-                    md += `### 📝 事項與執行歷程清單\n`;
-                    exportTasksMatch.value.forEach(t => {
-                        const icon = t.status === '已完成' ? '✅' : '⏳';
-                        const subStr = t.subCategory ? ` · ${t.subCategory}` : '';
-                        const apprStr = t.approvalStatus && t.approvalStatus !== '無' ? ` | 👥 ${t.approvalStatus}` : '';
-                        md += `- ${icon} **[${t.category}${subStr}]** ${t.title} (${t.priority}優先 | ${t.status}${apprStr})\n`;
-                        
-                        if (t.subCategory === '費用') {
-                            md += `  > 🧾 費用核銷: 送會計日 ${t.accountingDate || '未定'} | 關卡: ${t.expenseStatus || '已開立'}\n`;
-                        }
-                        if (exportIncludeNotes.value && t.notes) {
-                            md += `  > 備註: ${t.notes}\n`;
-                        }
-                        if (t.history && t.history.length > 0) {
-                            t.history.forEach(h => {
-                                md += `  - 🕒 \`${h.timestamp}\` ${h.content}\n`;
-                            });
-                        }
+                const renderNotesWithLinks = (text) => {
+                    if (!text) return '';
+                    const urlRegex = /(https?:\/\/[^\s]+)/g;
+                    return text.replace(urlRegex, (url) => {
+                        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="note-link">${url} <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>`;
                     });
-
-                    copyText(md);
-                    showToast('已複製 Markdown 至剪貼簿');
                 };
 
                 const copyText = (text) => {
@@ -1430,9 +1720,23 @@
                     document.body.removeChild(textArea);
                 };
 
+                const toastMessage = ref('');
                 const showToast = (msg) => {
-                    toastMsg.value = msg;
-                    setTimeout(() => { toastMsg.value = ''; }, 3000);
+                    toastMessage.value = msg;
+                    setTimeout(() => { toastMessage.value = ''; }, 3000);
+                };
+
+                const formatNumber = (num) => {
+                    return (Number(num) || 0).toLocaleString();
+                };
+
+                const changeDate = (days) => {
+                    const current = new Date(selectedDate.value);
+                    current.setDate(current.getDate() + days);
+                    const yyyy = current.getFullYear();
+                    const mm = String(current.getMonth() + 1).padStart(2, '0');
+                    const dd = String(current.getDate()).padStart(2, '0');
+                    selectedDate.value = `${yyyy}-${mm}-${dd}`;
                 };
 
                 onMounted(() => {
@@ -1443,34 +1747,48 @@
                     isLocked,
                     inputPassword,
                     showPassword,
-                    lockErrorMsg,
-                    showChangePasswordModal,
-                    newPasswordInput,
+                    lockError,
                     verifyPassword,
-                    lockSystem,
-                    openChangePasswordModal,
+                    lockApp,
+                    showModal,
+                    newPasswordInput,
                     saveNewPassword,
-                    currentTab,
+                    todayStr,
                     selectedDate,
                     searchQuery,
-                    filterCategory,
-                    filterSubCategory,
+                    currentTab,
+                    businessCategories,
+                    currentCategory,
+                    currentSubCategory,
+                    finSubCategories,
+                    currentFinSubCategory,
+                    financialViewMode,
                     filterPendingApproval,
                     pendingApprovalCount,
-                    togglePendingApprovalFilter,
-                    quickConfirmApproval,
-                    mainCategories,
                     subCategoryOptions,
                     expenseSteps,
                     isExpenseStepActive,
-                    selectMainCategory,
-                    onCategoryChange,
+                    currentMonthLabel,
                     tasks,
+                    quickLogs,
+                    matrixData,
+                    netBalance,
+                    groupedFinancialTasks,
                     filteredTasks,
                     dailyStats,
-                    showTaskModal,
                     editingTaskId,
                     formTask,
+                    onCategoryChangeInForm,
+                    openNewTaskModal,
+                    openEditTaskModal,
+                    saveTaskForm,
+                    deleteTask,
+                    loadAicExcelSeedTasks,
+                    selectMainCategory,
+                    togglePendingApprovalFilter,
+                    quickConfirmApproval,
+                    importRoutineTasks,
+                    addQuickLog,
                     showExportModal,
                     exportStartDate,
                     exportEndDate,
@@ -1479,33 +1797,17 @@
                     exportTasksMatch,
                     aiSummaryText,
                     isGeneratingAI,
-                    quickLogs,
-                    expandedHistory,
-                    toggleTaskHistory,
-                    addQuickLog,
-                    deleteHistoryLog,
-                    deleteModalHistoryLog,
-                    importRoutineTasks,
-                    renderNotesWithLinks,
-                    toastMsg,
-                    todayStr,
-                    changeDate,
-                    setToday,
-                    openTaskModal,
-                    editTask,
-                    saveFormTask,
-                    toggleComplete,
-                    moveToTomorrow,
-                    deleteTask,
-                    saveTasks,
-                    getPriorityClass,
                     openExportModal,
                     setExportRange,
-                    generateAISummary,
                     exportPDF,
                     exportCSV,
                     exportMarkdown,
-                    copyText
+                    generateAISummary,
+                    exportDirectorReport,
+                    renderNotesWithLinks,
+                    toastMessage,
+                    formatNumber,
+                    changeDate
                 };
             }
         }).mount('#app');
