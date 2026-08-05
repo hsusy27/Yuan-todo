@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>yuan 代辦事項 - 智慧工作待辦與日誌匯出系統</title>
+    <title>yuan  - 工作待辦與日誌匯出系統</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -91,7 +91,7 @@
                 </div>
 
                 <div class="text-[11px] text-stone-400 pt-2 border-t border-stone-100 dark:border-stone-700/60">
-                    🔒 資料儲存於本機瀏覽器，安全防護無虞
+                    🔒 資料儲存於本機瀏覽器
                 </div>
             </div>
         </div>
@@ -364,8 +364,9 @@
                                             <select v-model="task.expenseStatus" @change="saveTasks()" class="text-xs bg-white dark:bg-stone-800 text-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-800 rounded-xl px-2 py-1 font-bold focus:ring-1 focus:ring-blue-400 shadow-2xs">
                                                 <option value="已開立">已開立</option>
                                                 <option value="會計確認">會計確認</option>
+                                                <option value="開立費用彙總">開立費用彙總</option>
                                                 <option value="費用轉彙總">費用轉彙總</option>
-                                                <option value="出納">出納</option>
+                                                <option value="出納通知匯款">出納通知匯款</option>
                                                 <option value="完成">完成</option>
                                             </select>
                                         </div>
@@ -580,9 +581,9 @@
                                     <select v-model="formTask.expenseStatus" class="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-stone-900 border border-blue-200 dark:border-stone-700 focus:outline-none font-medium">
                                         <option value="已開立">已開立</option>
                                         <option value="會計確認">會計確認</option>
-                                        <option value="會計確認">開立費用彙總	</option>
+                                        <option value="開立費用彙總">開立費用彙總	</option>
                                         <option value="費用轉彙總">費用轉傳票</option>
-                                        <option value="出納">出納通知匯款</option>
+                                        <option value="出納通知匯款">出納通知匯款</option>
                                         <option value="完成">完成</option>
                                     </select>
                                 </div>
@@ -853,7 +854,7 @@
                 const expandedHistory = ref({});
 
                 // Expense Workflow Steps Definitions
-                const expenseSteps = ['已開立', '會計確認', '費用轉彙總', '出納', '完成'];
+                const expenseSteps = ['已開立', '會計確認', '開立費用彙總', '費用轉傳票', '出納通知匯款', '完成'];
 
                 // Check if an expense step is active/completed
                 const isExpenseStepActive = (currentStatus, step) => {
